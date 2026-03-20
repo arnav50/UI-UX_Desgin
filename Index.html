@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AssistDesk — Smart Support Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Core Palette — Deep Navy + Warm Cream + Electric Teal */
+  --navy:        #0F1B2D;
+  --navy-2:      #162338;
+  --navy-3:      #1E2F47; 
+  --navy-4:      #243650; 
+  --teal:        #00C9A7;   
+  --teal-dim:    #00a88a;
+  --teal-glow:   rgba(0,201,167,.18);
+  --teal-light:  rgba(0,201,167,.08);
+  --cream:       #F8F4EE;
+  --cream-2:     #EDE8E0;
+  --cream-3:     #E2DBD0;
+  --amber:       #F5A623;
+  --amber-light: rgba(245,166,35,.15);
+  --red:         #FF5C5C;
+  --red-light:   rgba(255,92,92,.12);
+  --green:       #2ECC71;
+  --green-light: rgba(46,204,113,.12);
+
+  --text-w1: #F0EDE8;
+  --text-w2: #A8B4C4;
+  --text-w3: #6B7A8D;
+  --text-w4: #3D4F65;
+
+  --font-ui:   'Sora', sans-serif;
+  --font-serif:'Lora', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --sidebar-w: 220px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-full: 999px;
+
+  --shadow-card: 0 2px 12px rgba(0,0,0,.25), 0 1px 3px rgba(0,0,0,.2);
+  --shadow-float: 0 8px 32px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.25);
+  --shadow-teal: 0 0 20px rgba(0,201,167,.25);
+  --t: 200ms cubic-bezier(.25,.46,.45,.94);
+  --t-slow: 380ms cubic-bezier(.25,.46,.45,.94);
+}
+
+/* Light theme overrides (applies when html has data-theme="light") */
+html[data-theme="light"] {
+  --navy:        #F8F4EE;
+  --navy-2:      #FFFFFF;
+  --navy-3:      #F2EFE9;
+  --navy-4:      #E6E0D6;
+  --teal:        #00796B;
+  --teal-dim:    #005a4f;
+  --teal-glow:   rgba(0,121,107,.08);
+  --teal-light:  rgba(0,121,107,.06);
+  --cream:       #F8F4EE;
+  --cream-2:     #F1ECE6;
+  --cream-3:     #E6E0D6;
+  --amber:       #D97706;
+  --amber-light: rgba(217,119,6,.08);
+  --red:         #C53030;
+  --red-light:   rgba(197,48,48,.08);
+  --green:       #16A34A;
+
+  --text-w1: #0F1720;
+  --text-w2: #374151;
+  --text-w3: #6B7280;
+  --text-w4: #9CA3AF;
+
+  --shadow-card: 0 2px 10px rgba(10,15,20,.03);
+  --shadow-float: 0 8px 24px rgba(10,15,20,.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font-ui); background: var(--navy); color: var(--text-w1); min-height: 100vh; overflow: hidden; }
+button { font-family: inherit; cursor: pointer; border: none; outline: none; }
+input, textarea { font-family: inherit; outline: none; border: none; background: transparent; }
+svg { display: block; flex-shrink: 0; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--navy-4); border-radius: 4px; }
+
+/* ── LAYOUT ── */
+.shell { display: flex; height: 100vh; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--navy-2);
+  border-right: 1px solid rgba(255,255,255,.06);
+  display: flex; flex-direction: column;
+  flex-shrink: 0;
+  position: relative;
+}
+.sidebar::after {
+  content: '';
+  position: absolute; right: -1px; top: 60px; bottom: 60px;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, var(--teal), transparent);
+  opacity: .3;
+}
+
+.sb-brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 20px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.brand-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--teal), #0099ff);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 14px rgba(0,201,167,.4);
+}
+.brand-icon svg { width: 18px; height: 18px; stroke: #fff; }
+.brand-name {
+  font-family: var(--font-serif);
+  font-size: 1.05rem; font-weight: 600;
+  color: var(--text-w1);
+  letter-spacing: -.01em;
+}
+.brand-version {
+  margin-left: auto;
+  font-size: .6rem; font-weight: 600;
+  background: var(--teal-light);
+  border: 1px solid rgba(0,201,167,.25);
+  color: var(--teal);
+  padding: 2px 7px; border-radius: var(--r-full);
+  letter-spacing: .05em;
+}
+
+.sb-nav { flex: 1; padding: 14px 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.sb-section { font-size: .6rem; font-weight: 700; color: var(--text-w4); letter-spacing: .1em; text-transform: uppercase; padding: 10px 10px 4px; }
+.sb-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: var(--r-sm);
+  color: var(--text-w3); font-size: .82rem; font-weight: 500;
+  cursor: pointer; transition: all var(--t);
+  position: relative;
+}
+.sb-item:hover { background: rgba(255,255,255,.05); color: var(--text-w1); }
+.sb-item.active { background: var(--teal-light); color: var(--teal); }
+.sb-item.active::before {
+  content: ''; position: absolute; left: 0; top: 6px; bottom: 6px;
+  width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--teal); box-shadow: var(--shadow-teal);
+}
+.sb-icon { width: 16px; height: 16px; flex-shrink: 0; }
+.sb-badge {
+  margin-left: auto; font-size: .62rem; font-weight: 700;
+  background: var(--red); color: #fff;
+  padding: 1px 6px; border-radius: var(--r-full);
+  min-width: 17px; text-align: center;
+}
+.sb-badge.teal { background: var(--teal); color: var(--navy); }
+.sb-badge.amber { background: var(--amber); color: var(--navy); }
+
+.sb-footer { padding: 12px 10px; border-top: 1px solid rgba(255,255,255,.05); }
+.sb-user { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--r-sm); cursor: pointer; transition: background var(--t); }
+.sb-user:hover { background: rgba(255,255,255,.05); }
+.sb-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), #0099ff);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .68rem; font-weight: 700; color: var(--navy); flex-shrink: 0;
+  box-shadow: 0 0 10px rgba(0,201,167,.3);
+}
+.sb-user-name { font-size: .8rem; font-weight: 600; color: var(--text-w1); }
+.sb-user-role { font-size: .68rem; color: var(--text-w3); }
+
+/* ── MAIN ── */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 54px;
+  background: var(--navy-2);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 22px;
+  flex-shrink: 0;
+}
+.topbar-title {
+  font-family: var(--font-serif);
+  font-size: 1rem; font-style: italic;
+  color: var(--text-w2); font-weight: 400;
+}
+.topbar-search {
+  flex: 1; max-width: 360px; margin-left: 8px;
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--r-full); padding: 7px 14px;
+  transition: all var(--t);
+}
+.topbar-search:focus-within { border-color: rgba(0,201,167,.4); background: rgba(0,201,167,.04); box-shadow: 0 0 0 3px rgba(0,201,167,.08); }
+.topbar-search svg { width: 13px; height: 13px; color: var(--text-w3); }
+.topbar-search input { flex: 1; font-size: .78rem; color: var(--text-w1); }
+.topbar-search input::placeholder { color: var(--text-w4); }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.tb-btn {
+  width: 32px; height: 32px; border-radius: var(--r-sm);
+  background: transparent; display: flex; align-items: center; justify-content: center;
+  color: var(--text-w3); transition: all var(--t); position: relative;
+}
+.tb-btn:hover { background: rgba(255,255,255,.06); color: var(--text-w1); }
+.tb-btn svg { width: 16px; height: 16px; }
+.tb-dot { position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--red); border: 2px solid var(--navy-2); }
+.tb-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--teal), #0099ff); display: flex; align-items: center; justify-content: center; font-size: .64rem; font-weight: 700; color: var(--navy); cursor: pointer; box-shadow: 0 0 10px rgba(0,201,167,.25); }
+
+/* ── PAGES ── */
+.page { flex: 1; overflow: hidden; display: none; }
+.page.active { display: flex; flex-direction: column; }
+.page-scroll { flex: 1; overflow-y: auto; padding: 22px 24px; }
+
+/* ═══ DASHBOARD ═══ */
+.dash-header { margin-bottom: 20px; }
+.dash-title { font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; color: var(--text-w1); letter-spacing: -.02em; margin-bottom: 4px; }
+.dash-title span { color: var(--teal); font-style: italic; }
+.dash-sub { font-size: .78rem; color: var(--text-w3); }
+
+/* Metrics */
+.metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 18px; }
+.metric {
+  background: var(--navy-3);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: var(--r-lg); padding: 16px 18px;
+  position: relative; overflow: hidden;
+  transition: all var(--t); cursor: default;
+}
+.metric::before { content: ''; position: absolute; inset: 0; background: var(--m-glow, transparent); opacity: 0; transition: opacity var(--t); }
+.metric:hover::before { opacity: 1; }
+.metric:hover { border-color: var(--m-border, rgba(255,255,255,.1)); transform: translateY(-2px); box-shadow: var(--shadow-float); }
+.metric.teal { --m-border: rgba(0,201,167,.3); --m-glow: radial-gradient(circle at 0% 0%, rgba(0,201,167,.08), transparent 60%); }
+.metric.amber { --m-border: rgba(245,166,35,.3); --m-glow: radial-gradient(circle at 0% 0%, rgba(245,166,35,.08), transparent 60%); }
+.metric.red { --m-border: rgba(255,92,92,.3); --m-glow: radial-gradient(circle at 0% 0%, rgba(255,92,92,.08), transparent 60%); }
+.metric.blue { --m-border: rgba(0,153,255,.3); --m-glow: radial-gradient(circle at 0% 0%, rgba(0,153,255,.08), transparent 60%); }
+.m-label { font-size: .68rem; font-weight: 600; color: var(--text-w3); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+.m-value { font-family: var(--font-serif); font-size: 1.9rem; font-weight: 600; color: var(--text-w1); letter-spacing: -.04em; line-height: 1; margin-bottom: 6px; }
+.m-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+.m-sub { font-size: .72rem; color: var(--text-w3); }
+.m-up { color: var(--teal); font-weight: 600; }
+.m-dn { color: var(--red); font-weight: 600; }
+
+/* Quick Actions */
+.quick-row { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px; border-radius: var(--r-sm);
+  font-size: .8rem; font-weight: 600;
+  transition: all var(--t); cursor: pointer;
+  letter-spacing: .01em;
+}
+.btn svg { width: 14px; height: 14px; }
+.btn-teal { background: var(--teal); color: var(--navy); }
+.btn-teal:hover { background: #00ddb8; box-shadow: 0 4px 16px rgba(0,201,167,.4); transform: translateY(-1px); }
+.btn-red { background: var(--red); color: #fff; }
+.btn-red:hover { background: #ff3e3e; box-shadow: 0 4px 16px rgba(255,92,92,.35); transform: translateY(-1px); }
+.btn-ghost { background: rgba(255,255,255,.06); color: var(--text-w2); border: 1px solid rgba(255,255,255,.08); }
+.btn-ghost:hover { background: rgba(255,255,255,.1); color: var(--text-w1); }
+.btn-outline-teal { background: transparent; color: var(--teal); border: 1.5px solid rgba(0,201,167,.4); }
+.btn-outline-teal:hover { background: var(--teal-light); border-color: var(--teal); }
+.btn-sm { padding: 6px 12px; font-size: .74rem; }
+
+/* Dashboard grid */
+.dash-grid { display: grid; grid-template-columns: 1fr 300px; gap: 14px; }
+.card {
+  background: var(--navy-3);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: var(--r-lg); padding: 18px;
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.card-title { font-size: .68rem; font-weight: 700; color: var(--text-w3); letter-spacing: .08em; text-transform: uppercase; }
+
+/* Timeline */
+.timeline { display: flex; flex-direction: column; }
+.tl-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+.tl-item:last-child { border-bottom: none; }
+.tl-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.tl-dot.teal { background: var(--teal); box-shadow: 0 0 6px rgba(0,201,167,.5); }
+.tl-dot.amber { background: var(--amber); }
+.tl-dot.red { background: var(--red); }
+.tl-dot.dim { background: var(--navy-4); }
+.tl-text { font-size: .8rem; color: var(--text-w2); line-height: 1.45; }
+.tl-text strong { color: var(--text-w1); font-weight: 600; }
+.tl-time { font-size: .68rem; color: var(--text-w4); margin-top: 2px; font-family: var(--font-mono); }
+
+/* Service mini */
+.svc-list { display: flex; flex-direction: column; gap: 8px; }
+.svc-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--r-md);
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.05);
+  transition: all var(--t); cursor: pointer;
+}
+.svc-row:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.1); }
+.svc-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.svc-dot.run { background: var(--teal); box-shadow: 0 0 8px rgba(0,201,167,.5); animation: pls 2s ease-in-out infinite; }
+.svc-dot.stop { background: var(--red); animation: none; }
+.svc-dot.warn { background: var(--amber); }
+@keyframes pls { 0%,100%{box-shadow:0 0 0 0 rgba(0,201,167,.5)} 50%{box-shadow:0 0 0 5px rgba(0,201,167,0)} }
+.svc-name { font-size: .8rem; font-weight: 600; color: var(--text-w1); flex: 1; }
+.svc-pill { font-size: .62rem; font-weight: 700; padding: 2px 8px; border-radius: var(--r-full); }
+.svc-pill.run { background: rgba(0,201,167,.15); color: var(--teal); }
+.svc-pill.stop { background: rgba(255,92,92,.15); color: var(--red); }
+.svc-pill.warn { background: rgba(245,166,35,.15); color: var(--amber); }
+
+/* ═══ CHATBOT / KB ═══ */
+.chat-shell {
+  display: grid; grid-template-columns: 260px 1fr;
+  flex: 1; overflow: hidden;
+}
+
+/* Chat Sidebar */
+.chat-sidebar {
+  background: var(--navy-2);
+  border-right: 1px solid rgba(255,255,255,.06);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.chat-sb-top { padding: 14px 14px 10px; border-bottom: 1px solid rgba(255,255,255,.05); }
+.chat-sb-title { font-size: .72rem; font-weight: 700; color: var(--text-w3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; }
+.new-chat-btn {
+  width: 100%; padding: 9px; border-radius: var(--r-sm);
+  background: var(--teal); color: var(--navy);
+  font-size: .78rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: all var(--t);
+}
+.new-chat-btn:hover { background: #00ddb8; box-shadow: 0 4px 14px rgba(0,201,167,.35); }
+.new-chat-btn svg { width: 13px; height: 13px; }
+
+.chat-search { display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: var(--r-sm); padding: 7px 10px; margin: 10px 14px; transition: all var(--t); }
+.chat-search:focus-within { border-color: rgba(0,201,167,.3); }
+.chat-search svg { width: 12px; height: 12px; color: var(--text-w4); }
+.chat-search input { flex: 1; font-size: .75rem; color: var(--text-w1); }
+.chat-search input::placeholder { color: var(--text-w4); }
+
+.chat-history { flex: 1; overflow-y: auto; padding: 6px 10px 14px; }
+.ch-section { font-size: .62rem; font-weight: 700; color: var(--text-w4); letter-spacing: .08em; text-transform: uppercase; padding: 10px 6px 4px; }
+.ch-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; border-radius: var(--r-sm);
+  cursor: pointer; transition: all var(--t); margin-bottom: 1px;
+}
+.ch-item:hover { background: rgba(255,255,255,.05); }
+.ch-item.active { background: var(--teal-light); }
+.ch-item-icon { width: 24px; height: 24px; border-radius: 6px; background: rgba(255,255,255,.05); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ch-item-icon svg { width: 12px; height: 12px; color: var(--text-w3); }
+.ch-item.active .ch-item-icon { background: var(--teal-glow); }
+.ch-item.active .ch-item-icon svg { color: var(--teal); }
+.ch-title { font-size: .76rem; color: var(--text-w2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.ch-time { font-size: .62rem; color: var(--text-w4); font-family: var(--font-mono); flex-shrink: 0; }
+
+/* Topics */
+.chat-topics { padding: 10px 14px 14px; border-top: 1px solid rgba(255,255,255,.05); }
+.topics-title { font-size: .62rem; font-weight: 700; color: var(--text-w4); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.topic-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.topic-chip {
+  padding: 4px 9px; border-radius: var(--r-full);
+  font-size: .68rem; font-weight: 600;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+  color: var(--text-w3); cursor: pointer; transition: all var(--t);
+}
+.topic-chip:hover { background: var(--teal-light); border-color: rgba(0,201,167,.3); color: var(--teal); }
+
+/* Chat Main */
+.chat-main { display: flex; flex-direction: column; background: var(--navy); overflow: hidden; }
+
+.chat-topbar {
+  height: 52px; padding: 0 20px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; gap: 12px;
+  background: var(--navy-2); flex-shrink: 0;
+}
+.bot-indicator { display: flex; align-items: center; gap: 10px; }
+.bot-avatar {
+  width: 32px; height: 32px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--teal) 0%, #0080ff 100%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 12px rgba(0,201,167,.35);
+}
+.bot-avatar svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; }
+.bot-name { font-size: .86rem; font-weight: 700; color: var(--text-w1); }
+.bot-status { font-size: .68rem; color: var(--teal); display: flex; align-items: center; gap: 4px; }
+.bot-status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--teal); display: inline-block; animation: pls 2s ease-in-out infinite; }
+
+/* Messages */
+.chat-msgs { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+.msg-row { display: flex; gap: 10px; }
+.msg-row.user { flex-direction: row-reverse; }
+
+.msg-avatar { width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: .64rem; font-weight: 700; }
+.msg-avatar.bot { background: linear-gradient(135deg, var(--teal), #0080ff); color: var(--navy); box-shadow: 0 0 10px rgba(0,201,167,.25); }
+.msg-avatar.user { background: var(--navy-4); color: var(--text-w2); }
+
+.msg-bubble {
+  max-width: 72%; padding: 11px 14px;
+  border-radius: var(--r-md); font-size: .82rem; line-height: 1.6;
+  position: relative;
+}
+.msg-bubble.bot { background: var(--navy-3); border: 1px solid rgba(255,255,255,.07); color: var(--text-w2); border-top-left-radius: 4px; }
+.msg-bubble.user { background: linear-gradient(135deg, var(--teal) 0%, #00a8ff 100%); color: var(--navy); font-weight: 500; border-top-right-radius: 4px; }
+.msg-bubble strong { font-weight: 700; }
+.msg-bubble code { font-family: var(--font-mono); font-size: .75rem; background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; }
+.msg-time { font-size: .62rem; color: var(--text-w4); margin-top: 4px; font-family: var(--font-mono); }
+.msg-row.user .msg-time { text-align: right; }
+
+/* Suggestions */
+.msg-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.sugg-chip {
+  padding: 5px 11px; border-radius: var(--r-full);
+  font-size: .72rem; font-weight: 600;
+  background: rgba(0,201,167,.08); border: 1px solid rgba(0,201,167,.2);
+  color: var(--teal); cursor: pointer; transition: all var(--t);
+}
+.sugg-chip:hover { background: rgba(0,201,167,.15); border-color: var(--teal); }
+
+/* Sources */
+.msg-sources { margin-top: 8px; }
+.src-label { font-size: .65rem; color: var(--text-w4); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 5px; }
+.src-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: var(--r-full); background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); color: var(--text-w3); font-size: .68rem; margin-right: 5px; cursor: pointer; transition: all var(--t); }
+.src-pill:hover { border-color: rgba(0,201,167,.3); color: var(--teal); }
+.src-pill svg { width: 10px; height: 10px; }
+
+/* Typing */
+.typing-indicator { display: flex; gap: 4px; align-items: center; padding: 10px 0; }
+.typing-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); opacity: .4; animation: typing 1.2s ease-in-out infinite; }
+.typing-dot:nth-child(2) { animation-delay: .2s; }
+.typing-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes typing { 0%,60%,100%{opacity:.4;transform:translateY(0)} 30%{opacity:1;transform:translateY(-4px)} }
+
+/* Welcome State */
+.chat-welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; padding: 40px 20px; text-align: center; }
+.welcome-icon { width: 64px; height: 64px; border-radius: 20px; background: linear-gradient(135deg, var(--teal), #0080ff); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; box-shadow: 0 0 32px rgba(0,201,167,.4); }
+.welcome-icon svg { width: 32px; height: 32px; stroke: #fff; fill: none; stroke-width: 1.5; }
+.welcome-title { font-family: var(--font-serif); font-size: 1.4rem; font-weight: 600; color: var(--text-w1); margin-bottom: 8px; }
+.welcome-title em { color: var(--teal); }
+.welcome-sub { font-size: .82rem; color: var(--text-w3); max-width: 320px; line-height: 1.6; margin-bottom: 24px; }
+.welcome-cards { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; width: 100%; max-width: 420px; }
+.welcome-card {
+  padding: 12px 14px; border-radius: var(--r-md);
+  background: var(--navy-3); border: 1px solid rgba(255,255,255,.07);
+  cursor: pointer; transition: all var(--t); text-align: left;
+}
+.welcome-card:hover { border-color: rgba(0,201,167,.3); background: rgba(0,201,167,.05); transform: translateY(-2px); }
+.wc-icon { font-size: 1.1rem; margin-bottom: 6px; }
+.wc-title { font-size: .78rem; font-weight: 700; color: var(--text-w1); margin-bottom: 2px; }
+.wc-sub { font-size: .7rem; color: var(--text-w3); line-height: 1.4; }
+
+/* Chat Input */
+.chat-input-area {
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  background: var(--navy-2); flex-shrink: 0;
+}
+.input-box {
+  display: flex; align-items: flex-end; gap: 10px;
+  background: var(--navy-3); border: 1px solid rgba(255,255,255,.08);
+  border-radius: var(--r-lg); padding: 10px 10px 10px 16px;
+  transition: all var(--t);
+}
+.input-box:focus-within { border-color: rgba(0,201,167,.4); box-shadow: 0 0 0 3px rgba(0,201,167,.06); }
+.input-box textarea {
+  flex: 1; font-size: .82rem; color: var(--text-w1); resize: none;
+  max-height: 120px; min-height: 22px; line-height: 1.5;
+}
+.input-box textarea::placeholder { color: var(--text-w4); }
+.input-actions { display: flex; align-items: center; gap: 4px; }
+.input-btn { width: 30px; height: 30px; border-radius: var(--r-sm); background: transparent; display: flex; align-items: center; justify-content: center; color: var(--text-w3); transition: all var(--t); }
+.input-btn:hover { background: rgba(255,255,255,.06); color: var(--text-w1); }
+.input-btn svg { width: 15px; height: 15px; }
+.send-btn {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--teal); color: var(--navy);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--t); flex-shrink: 0;
+}
+.send-btn:hover { background: #00ddb8; box-shadow: 0 0 14px rgba(0,201,167,.4); }
+.send-btn svg { width: 15px; height: 15px; }
+.input-hint { font-size: .65rem; color: var(--text-w4); margin-top: 7px; text-align: center; }
+
+/* ═══ EMAIL ═══ */
+.email-shell { display: grid; grid-template-columns: 240px 1fr; flex: 1; overflow: hidden; }
+.email-list-panel { background: var(--navy-2); border-right: 1px solid rgba(255,255,255,.06); display: flex; flex-direction: column; overflow: hidden; }
+.email-panel-top { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.05); }
+.email-tabs { display: flex; gap: 2px; background: rgba(255,255,255,.04); border-radius: var(--r-sm); padding: 3px; }
+.email-tab { flex: 1; padding: 5px; text-align: center; font-size: .72rem; font-weight: 600; color: var(--text-w3); border-radius: 5px; cursor: pointer; transition: all var(--t); }
+.email-tab.active { background: var(--navy-3); color: var(--text-w1); }
+.e-list { flex: 1; overflow-y: auto; }
+.e-item { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.04); cursor: pointer; transition: background var(--t); position: relative; }
+.e-item:hover { background: rgba(255,255,255,.03); }
+.e-item.active { background: var(--teal-light); }
+.e-item.unread::before { content:''; position:absolute; left:6px; top:50%; transform:translateY(-50%); width:5px; height:5px; border-radius:50%; background:var(--teal); }
+.e-sender { font-size: .78rem; font-weight: 700; color: var(--text-w1); margin-bottom: 2px; }
+.e-subj { font-size: .74rem; color: var(--text-w2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+.e-prev { font-size: .68rem; color: var(--text-w4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.e-meta { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
+.e-time { margin-left: auto; font-size: .62rem; color: var(--text-w4); font-family: var(--font-mono); }
+.e-pill { font-size: .6rem; font-weight: 700; padding: 1px 7px; border-radius: var(--r-full); }
+.e-pill.pending { background: rgba(245,166,35,.15); color: var(--amber); }
+.e-pill.replied { background: rgba(0,201,167,.12); color: var(--teal); }
+.e-pill.escalated { background: rgba(255,92,92,.12); color: var(--red); }
+.e-pill.ai { background: rgba(0,153,255,.12); color: #3BB9FF; }
+
+.email-view { display: flex; flex-direction: column; overflow: hidden; }
+.ev-header { padding: 16px 20px 12px; border-bottom: 1px solid rgba(255,255,255,.06); flex-shrink: 0; }
+.ev-subject { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 600; color: var(--text-w1); margin-bottom: 6px; }
+.ev-from { font-size: .76rem; color: var(--text-w3); }
+.ev-from strong { color: var(--text-w1); }
+.ev-actions { display: flex; gap: 7px; margin-top: 10px; }
+.ev-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+.ev-body p { font-size: .82rem; color: var(--text-w2); line-height: 1.7; margin-bottom: 12px; }
+
+/* AI Suggestion */
+.ai-box {
+  background: linear-gradient(135deg, rgba(0,153,255,.08), rgba(0,201,167,.06));
+  border: 1px solid rgba(0,153,255,.2);
+  border-radius: var(--r-md); padding: 14px;
+  margin-bottom: 14px;
+}
+.ai-box-label { display: flex; align-items: center; gap: 7px; font-size: .65rem; font-weight: 700; color: #3BB9FF; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+.ai-box-label svg { width: 12px; height: 12px; }
+.ai-box p { font-size: .8rem; color: var(--text-w2); line-height: 1.6; margin: 0; }
+.ai-box-actions { display: flex; gap: 7px; margin-top: 10px; }
+
+.compose-panel { border-top: 1px solid rgba(255,255,255,.06); padding: 14px 20px; flex-shrink: 0; }
+.compose-input { width: 100%; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: var(--r-md); padding: 11px 13px; font-size: .8rem; color: var(--text-w1); resize: none; height: 80px; font-family: inherit; line-height: 1.5; transition: border-color var(--t); }
+.compose-input::placeholder { color: var(--text-w4); }
+.compose-input:focus { border-color: rgba(0,201,167,.4); }
+.compose-footer { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
+
+/* ═══ SERVICES ═══ */
+.services-page { padding: 22px 24px; overflow-y: auto; }
+.sv-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin-bottom: 20px; }
+.sv-card {
+  background: var(--navy-3); border: 1px solid rgba(255,255,255,.06);
+  border-radius: var(--r-lg); padding: 20px;
+  transition: all var(--t);
+}
+.sv-card:hover { box-shadow: var(--shadow-card); }
+.sv-card.run { border-color: rgba(0,201,167,.2); }
+.sv-card.stop { border-color: rgba(255,92,92,.2); }
+.sv-card.warn { border-color: rgba(245,166,35,.2); }
+.sv-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.sv-ico { width: 40px; height: 40px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.sv-ico.teal { background: rgba(0,201,167,.12); }
+.sv-ico.red { background: rgba(255,92,92,.12); }
+.sv-ico.amber { background: rgba(245,166,35,.12); }
+.sv-ico.blue { background: rgba(0,153,255,.12); }
+.sv-ico svg { width: 18px; height: 18px; }
+.sv-info-name { font-size: .9rem; font-weight: 700; color: var(--text-w1); margin-bottom: 2px; }
+.sv-info-desc { font-size: .72rem; color: var(--text-w3); line-height: 1.4; }
+.sv-badge { margin-left: auto; display: flex; align-items: center; gap: 5px; font-size: .7rem; font-weight: 700; padding: 4px 10px; border-radius: var(--r-full); }
+.sv-badge.run { background: rgba(0,201,167,.12); color: var(--teal); }
+.sv-badge.stop { background: rgba(255,92,92,.12); color: var(--red); }
+.sv-badge.warn { background: rgba(245,166,35,.12); color: var(--amber); }
+.sv-badge .bd { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.sv-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 14px; }
+.sv-metric { text-align: center; padding: 9px 6px; background: rgba(255,255,255,.03); border-radius: var(--r-sm); }
+.sv-metric-val { font-family: var(--font-mono); font-size: .88rem; font-weight: 700; color: var(--text-w1); }
+.sv-metric-label { font-size: .6rem; color: var(--text-w4); margin-top: 2px; text-transform: uppercase; letter-spacing: .05em; }
+.sv-toggle-row { display: flex; align-items: center; gap: 10px; }
+/* Toggle */
+.toggle { position:relative; width:46px; height:24px; background:rgba(255,92,92,.2); border:1.5px solid rgba(255,92,92,.4); border-radius:12px; cursor:pointer; transition:all var(--t-slow); flex-shrink:0; }
+.toggle.on { background:rgba(0,201,167,.2); border-color:rgba(0,201,167,.5); }
+.toggle::after { content:''; position:absolute; top:3px; left:3px; width:14px; height:14px; border-radius:50%; background:var(--red); transition:all var(--t-slow); box-shadow:0 1px 4px rgba(0,0,0,.3); }
+.toggle.on::after { transform:translateX(22px); background:var(--teal); box-shadow:0 1px 6px rgba(0,201,167,.4); }
+.toggle-lbl { font-size: .78rem; font-weight: 600; color: var(--text-w2); }
+
+.log-panel { background: var(--navy-3); border: 1px solid rgba(255,255,255,.06); border-radius: var(--r-lg); padding: 16px; }
+.log-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.log-box { background: var(--navy); border-radius: var(--r-md); padding: 14px 16px; font-family: var(--font-mono); font-size: .72rem; line-height: 1.9; max-height: 180px; overflow-y: auto; }
+.log-l { color: var(--text-w4); }
+.log-l .ts { color: var(--navy-4); }
+.log-l.g { color: var(--teal); }
+.log-l.r { color: var(--red); }
+.log-l.a { color: var(--amber); }
+
+/* ═══ MODALS ═══ */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; z-index:9999; opacity:0; pointer-events:none; transition:opacity var(--t); }
+.overlay.show { opacity:1; pointer-events:all; }
+.modal { background:var(--navy-3); border:1px solid rgba(255,255,255,.1); border-radius:var(--r-xl); box-shadow:var(--shadow-float); padding:28px; width:400px; max-width:94vw; transform:translateY(16px) scale(.97); transition:transform var(--t-slow); }
+.overlay.show .modal { transform:translateY(0) scale(1); }
+.modal-ico { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+.modal-ico.r { background:rgba(255,92,92,.12); }
+.modal-ico.g { background:rgba(0,201,167,.1); }
+.modal-ico svg { width:22px; height:22px; }
+.modal-title { font-family:var(--font-serif); font-size:1.1rem; font-weight:600; color:var(--text-w1); margin-bottom:8px; }
+.modal-desc { font-size:.8rem; color:var(--text-w3); line-height:1.6; margin-bottom:22px; }
+.modal-btns { display:flex; gap:10px; justify-content:flex-end; }
+
+/* ═══ TOASTS ═══ */
+.toast-wrap { position:fixed; bottom:22px; right:22px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.toast { display:flex; align-items:center; gap:10px; background:var(--navy-3); border:1px solid rgba(255,255,255,.1); color:var(--text-w1); padding:11px 15px; border-radius:var(--r-md); font-size:.8rem; font-weight:500; box-shadow:var(--shadow-float); transform:translateX(120%); transition:transform var(--t-slow); pointer-events:all; min-width:260px; }
+.toast.show { transform:translateX(0); }
+.toast svg { width:15px; height:15px; flex-shrink:0; }
+.toast.t-g { border-color:rgba(0,201,167,.3); }
+.toast.t-g svg { color:var(--teal); }
+.toast.t-r { border-color:rgba(255,92,92,.3); }
+.toast.t-r svg { color:var(--red); }
+.toast.t-a { border-color:rgba(245,166,35,.3); }
+.toast.t-a svg { color:var(--amber); }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.fade-up { animation:fadeUp .3s ease forwards; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 18 18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2L2 7l7 4 7-4-7-5z"/><path d="M2 12l7 4 7-4"/><path d="M2 9.5l7 4 7-4"/></svg>
+    </div>
+    <span class="brand-name">AssistDesk</span>
+    <span class="brand-version">v2</span>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-section">Workspace</div>
+    <div class="sb-item active" onclick="nav('dashboard',this)">
+      <svg class="sb-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M1 2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H2a1 1 0 01-1-1V2zm5 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H7a1 1 0 01-1-1V2zm-5 5a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H2a1 1 0 01-1-1V7zm5 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H7a1 1 0 01-1-1V7zm-5 5a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H2a1 1 0 01-1-1v-2zm5 0a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H7a1 1 0 01-1-1v-2z"/></svg>
+      Dashboard
+    </div>
+
+    <div class="sb-section" style="margin-top:6px">Tools</div>
+    <div class="sb-item" onclick="nav('chatbot',this)">
+      <svg class="sb-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M5 8a1 1 0 11-2 0 1 1 0 012 0zm4 0a1 1 0 11-2 0 1 1 0 012 0zm3 1a1 1 0 100-2 1 1 0 000 2z"/><path fill-rule="evenodd" d="M2.165 15.803l.02-.004c1.83-.363 2.948-.842 3.468-1.105A9.06 9.06 0 008 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.437 10.437 0 01-.524 2.318l-.003.011a10.722 10.722 0 01-.244.637c-.079.186.074.394.273.362a21.673 21.673 0 00.693-.125z" clip-rule="evenodd"/></svg>
+      AI Chat Assistant
+      <span class="sb-badge teal">AI</span>
+    </div>
+    <div class="sb-item" onclick="nav('email',this)">
+      <svg class="sb-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M.05 3.555A2 2 0 012 2h12a2 2 0 011.95 1.555L8 8.414.05 3.555zM0 4.697v7.104l5.803-3.558L0 4.697zM6.761 8.83l-6.57 4.027A2 2 0 002 14h12a2 2 0 001.808-1.144l-6.57-4.027L8 9.586l-1.239-.757zm3.436-.586L16 11.801V4.697l-5.803 3.546z"/></svg>
+      Email Assistant
+      <span class="sb-badge">5</span>
+    </div>
+    <div class="sb-item" onclick="nav('services',this)">
+      <svg class="sb-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M8 4.754a3.246 3.246 0 100 6.492 3.246 3.246 0 000-6.492zM5.754 8a2.246 2.246 0 114.492 0 2.246 2.246 0 01-4.492 0z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 01-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 01-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 01.52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 011.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 011.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 01.52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 01-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 01-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 002.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 001.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 00-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 00-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 00-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 003.06 9.377l-.318-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 004.175 4.92l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 002.692-1.115l.094-.319z"/></svg>
+      Services
+      <span class="sb-badge amber">1</span>
+    </div>
+
+    <div class="sb-section" style="margin-top:6px">Account</div>
+    <div class="sb-item" onclick="toast('Settings panel','t-a')">
+      <svg class="sb-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 01-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 01.872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 012.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 012.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 01.872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 01-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 01-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 110-5.86 2.929 2.929 0 010 5.858z"/></svg>
+      Settings
+    </div>
+  </nav>
+
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar">AR</div>
+      <div>
+        <div class="sb-user-name">Arnav Sharma</div>
+        <div class="sb-user-role">Support Lead</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <span class="topbar-title" id="tbar-title">Overview</span>
+    <div class="topbar-search">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.099zM12 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z"/></svg>
+      <input type="text" placeholder="Search anything…">
+    </div>
+    <div class="topbar-right">
+      <button class="tb-btn" onclick="toast('No new notifications','t-g')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 16a2 2 0 002-2H6a2 2 0 002 2zM8 1.918l-.797.161A4.002 4.002 0 004 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 00-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 111.99 0A5.002 5.002 0 0113 6c0 .88.32 4.2 1.22 6z"/></svg>
+        <div class="tb-dot"></div>
+      </button>
+      <button class="tb-btn">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M14 1a1 1 0 011 1v8a1 1 0 01-1 1H4.414A2 2 0 003 11.586l-2 2V2a1 1 0 011-1h12zM2 0a2 2 0 00-2 2v12.793a.5.5 0 00.854.353l2.853-2.853A1 1 0 014.414 12H14a2 2 0 002-2V2a2 2 0 00-2-2H2z"/></svg>
+      </button>
+      <button id="theme-toggle" class="tb-btn" title="Toggle theme" onclick="toggleTheme()">
+        <svg id="theme-icon" viewBox="0 0 24 24" fill="currentColor"></svg>
+      </button>
+      <div class="tb-avatar">AR</div>
+    </div>
+  </header>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="p-dashboard" class="page active">
+    <div class="page-scroll">
+      <div class="dash-header">
+        <div class="dash-title">Welcome back, <span>Arnav</span> 👋</div>
+        <div class="dash-sub">Friday, 20 March 2026 · Everything looks good across the board</div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric teal">
+          <div class="m-label">Service Status</div>
+          <div class="m-value"><span class="m-dot" style="background:var(--teal);box-shadow:0 0 6px rgba(0,201,167,.5)"></span>Live</div>
+          <div class="m-sub"><span class="m-up">99.8%</span> uptime this month</div>
+        </div>
+        <div class="metric amber">
+          <div class="m-label">Emails Today</div>
+          <div class="m-value">24</div>
+          <div class="m-sub"><span class="m-up">↑ 8</span> from yesterday</div>
+        </div>
+        <div class="metric blue">
+          <div class="m-label">Chat Sessions</div>
+          <div class="m-value">137</div>
+          <div class="m-sub"><span class="m-up">↑ 23%</span> this week</div>
+        </div>
+        <div class="metric" style="--m-border:rgba(255,255,255,.12)">
+          <div class="m-label">Resolved</div>
+          <div class="m-value">94%</div>
+          <div class="m-sub">Avg resolution rate</div>
+        </div>
+      </div>
+
+      <div class="quick-row">
+        <button class="btn btn-teal" onclick="nav('services',null)">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm.75-10.25a.75.75 0 00-1.5 0V8H5.75a.75.75 0 000 1.5h1.5v2.25a.75.75 0 001.5 0V9.5h1.5a.75.75 0 000-1.5h-1.5V4.75z"/></svg>
+          Start Service
+        </button>
+        <button class="btn btn-red" onclick="confirmStop()">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zM6.75 5.25a.75.75 0 00-1.5 0v5.5a.75.75 0 001.5 0v-5.5zm3.5 0a.75.75 0 00-1.5 0v5.5a.75.75 0 001.5 0v-5.5z"/></svg>
+          Stop Service
+        </button>
+        <button class="btn btn-ghost" onclick="nav('email',null)">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M.05 3.555A2 2 0 012 2h12a2 2 0 011.95 1.555L8 8.414.05 3.555z"/><path d="M0 4.697v7.104l5.803-3.558L0 4.697z"/></svg>
+          Compose Email
+        </button>
+        <button class="btn btn-ghost" onclick="nav('chatbot',null)">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2.165 15.803l.02-.004c1.83-.363 2.948-.842 3.468-1.105A9.06 9.06 0 008 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.437 10.437 0 01-.524 2.318l-.003.011z" clip-rule="evenodd"/></svg>
+          Ask AI Assistant
+        </button>
+      </div>
+
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Activity Feed</div>
+            <button class="btn btn-ghost btn-sm">View All</button>
+          </div>
+          <div class="timeline">
+            <div class="tl-item"><div class="tl-dot teal"></div><div><div class="tl-text"><strong>Service started</strong> — Email Engine v2.4.1 running</div><div class="tl-time">10:45 AM · Today</div></div></div>
+            <div class="tl-item"><div class="tl-dot teal"></div><div><div class="tl-text">AI replied to <strong>Marcus Webb</strong> — billing inquiry resolved</div><div class="tl-time">09:22 AM · Today</div></div></div>
+            <div class="tl-item"><div class="tl-dot amber"></div><div><div class="tl-text"><strong>API Gateway</strong> latency warning — P95 at 524ms</div><div class="tl-time">08:30 AM · Today</div></div></div>
+            <div class="tl-item"><div class="tl-dot teal"></div><div><div class="tl-text">Chat session: <strong>137 queries</strong> resolved via AI assistant</div><div class="tl-time">08:00 AM · Today</div></div></div>
+            <div class="tl-item"><div class="tl-dot dim"></div><div><div class="tl-text">Scheduled backup completed — <strong>2.4 GB</strong> archived</div><div class="tl-time">02:00 AM · Today</div></div></div>
+            <div class="tl-item"><div class="tl-dot teal"></div><div><div class="tl-text"><strong>Priya Sharma</strong> account unlocked after escalation</div><div class="tl-time">Yesterday · 6:10 PM</div></div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="card">
+            <div class="card-head"><div class="card-title">Service Health</div><button class="btn btn-ghost btn-sm" onclick="nav('services',null)">Manage</button></div>
+            <div class="svc-list">
+              <div class="svc-row"><div class="svc-dot run"></div><span class="svc-name">Email Engine</span><span class="svc-pill run">Running</span></div>
+              <div class="svc-row"><div class="svc-dot warn"></div><span class="svc-name">API Gateway</span><span class="svc-pill warn">Warning</span></div>
+              <div class="svc-row"><div class="svc-dot stop"></div><span class="svc-name">Sync Worker</span><span class="svc-pill stop">Stopped</span></div>
+              <div class="svc-row"><div class="svc-dot run"></div><span class="svc-name">AI Chat Engine</span><span class="svc-pill run">Running</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">Pending Emails</div></div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:var(--r-sm)"><div style="flex:1"><div style="font-size:.76rem;font-weight:600;color:var(--text-w1)">Marcus Webb</div><div style="font-size:.66rem;color:var(--text-w4)">Billing · 2m ago</div></div><span class="e-pill pending">Pending</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:var(--r-sm)"><div style="flex:1"><div style="font-size:.76rem;font-weight:600;color:var(--text-w1)">Priya Sharma</div><div style="font-size:.66rem;color:var(--text-w4)">Access · 8m ago</div></div><span class="e-pill escalated">Escalated</span></div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:var(--r-sm)"><div style="flex:1"><div style="font-size:.76rem;font-weight:600;color:var(--text-w1)">Tom Chen</div><div style="font-size:.66rem;color:var(--text-w4)">Feature · 22m ago</div></div><span class="e-pill ai">AI Draft</span></div>
+            </div>
+            <button class="btn btn-outline-teal btn-sm" style="width:100%;justify-content:center;margin-top:10px" onclick="nav('email',null)">Open Inbox →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHATBOT ── -->
+  <div id="p-chatbot" class="page">
+    <div class="chat-shell">
+      <!-- Chat Sidebar -->
+      <div class="chat-sidebar">
+        <div class="chat-sb-top">
+          <div class="chat-sb-title">AI Knowledge Assistant</div>
+          <button class="new-chat-btn" onclick="newChat()">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 4a.5.5 0 01.5.5v3h3a.5.5 0 010 1h-3v3a.5.5 0 01-1 0v-3h-3a.5.5 0 010-1h3v-3A.5.5 0 018 4z"/></svg>
+            New Conversation
+          </button>
+        </div>
+        <div class="chat-search">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 10-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 001.415-1.414l-3.85-3.85a1.007 1.007 0 00-.115-.099zM12 6.5a5.5 5.5 0 11-11 0 5.5 5.5 0 0111 0z"/></svg>
+          <input type="text" placeholder="Search conversations…">
+        </div>
+
+        <div class="chat-history">
+          <div class="ch-section">Today</div>
+          <div class="ch-item active" onclick="loadChat(this,0)">
+            <div class="ch-item-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2.165 15.803l.02-.004c1.83-.363 2.948-.842 3.468-1.105A9.06 9.06 0 008 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.437 10.437 0 01-.524 2.318l-.003.011z" clip-rule="evenodd"/></svg></div>
+            <span class="ch-title">How to reset password?</span>
+            <span class="ch-time">9:14</span>
+          </div>
+          <div class="ch-item" onclick="loadChat(this,1)">
+            <div class="ch-item-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2.165 15.803l.02-.004c1.83-.363 2.948-.842 3.468-1.105A9.06 9.06 0 008 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.437 10.437 0 01-.524 2.318l-.003.011z" clip-rule="evenodd"/></svg></div>
+            <span class="ch-title">SMTP setup troubleshoot</span>
+            <span class="ch-time">8:50</span>
+          </div>
+          <div class="ch-item" onclick="loadChat(this,2)">
+            <div class="ch-item-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2.165 15.803l.02-.004c1.83-.363 2.948-.842 3.468-1.105A9.06 9.06 0 008 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.437 10.437 0 01-.524 2.318l-.003.011z" clip-rule="evenodd"/></svg></div>
+            <span class="ch-title">API rate limit explained</span>
+            <span class="ch-time">8:22</span>
+          </div>
+          <div class="ch-section">Yesterday</div>
+          <div class="ch-item" onclick="loadChat(this,3)">
+            <div class="ch-item-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2.165 15.803l.02-.004c1.83-.363 2.948-.842 3.468-1.105A9.06 9.06 0 008 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.437 10.437 0 01-.524 2.318l-.003.011z" clip-rule="evenodd"/></svg></div>
+            <span class="ch-title">Billing plan differences</span>
+            <span class="ch-time">5:41</span>
+          </div>
+          <div class="ch-item" onclick="loadChat(this,4)">
+            <div class="ch-item-icon"><svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2.165 15.803l.02-.004c1.83-.363 2.948-.842 3.468-1.105A9.06 9.06 0 008 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.437 10.437 0 01-.524 2.318l-.003.011z" clip-rule="evenodd"/></svg></div>
+            <span class="ch-title">Webhook config 2FA guide</span>
+            <span class="ch-time">3:20</span>
+          </div>
+        </div>
+
+        <div class="chat-topics">
+          <div class="topics-title">Quick Topics</div>
+          <div class="topic-chips">
+            <div class="topic-chip" onclick="askTopic('Account help')">Account</div>
+            <div class="topic-chip" onclick="askTopic('Billing questions')">Billing</div>
+            <div class="topic-chip" onclick="askTopic('API setup')">API</div>
+            <div class="topic-chip" onclick="askTopic('Email config')">Email</div>
+            <div class="topic-chip" onclick="askTopic('Technical issues')">Technical</div>
+            <div class="topic-chip" onclick="askTopic('Getting started')">Onboarding</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Main -->
+      <div class="chat-main">
+        <div class="chat-topbar">
+          <div class="bot-indicator">
+            <div class="bot-avatar">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+            </div>
+            <div>
+              <div class="bot-name">Rstar AI</div>
+              <div class="bot-status">Online · Powered by GPT-4</div>
+            </div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button class="tb-btn" onclick="toast('Conversation exported','t-g')"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/><path d="M7.646 11.854a.5.5 0 00.708 0l3-3a.5.5 0 00-.708-.708L8.5 10.293V1.5a.5.5 0 00-1 0v8.793L5.354 8.146a.5.5 0 10-.708.708l3 3z"/></svg></button>
+            <button class="tb-btn" onclick="clearChat()"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M5.5 5.5A.5.5 0 016 6v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm2.5 0a.5.5 0 01.5.5v6a.5.5 0 01-1 0V6a.5.5 0 01.5-.5zm3 .5a.5.5 0 00-1 0v6a.5.5 0 001 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 01-1 1H13v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4h-.5a1 1 0 010-2h3a1 1 0 01.117-.007L6.5 2h3a1 1 0 011 1zm-3 1H4v9a1 1 0 001 1h6a1 1 0 001-1V4z" clip-rule="evenodd"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="chat-msgs" id="chat-msgs">
+          <!-- Welcome shown initially, replaced on first message -->
+          <div class="chat-welcome" id="chat-welcome">
+            <div class="welcome-icon">
+              <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg>
+            </div>
+            <div class="welcome-title">Hi, I'm <em>Nexus AI</em></div>
+            <div class="welcome-sub">Your intelligent knowledge assistant. Ask me anything about your account, billing, technical setup, or product features.</div>
+            <div class="welcome-cards">
+              <div class="welcome-card" onclick="askTopic('How do I reset my password?')">
+                <div class="wc-icon">🔑</div>
+                <div class="wc-title">Reset Password</div>
+                <div class="wc-sub">Step-by-step account recovery</div>
+              </div>
+              <div class="welcome-card" onclick="askTopic('How do I configure SMTP email?')">
+                <div class="wc-icon">📧</div>
+                <div class="wc-title">Email Setup</div>
+                <div class="wc-sub">SMTP, TLS, and deliverability</div>
+              </div>
+              <div class="welcome-card" onclick="askTopic('What are the API rate limits?')">
+                <div class="wc-icon">⚡</div>
+                <div class="wc-title">API Limits</div>
+                <div class="wc-sub">Quotas and rate limit handling</div>
+              </div>
+              <div class="welcome-card" onclick="askTopic('How do I upgrade my billing plan?')">
+                <div class="wc-icon">💳</div>
+                <div class="wc-title">Billing & Plans</div>
+                <div class="wc-sub">Upgrade, invoices, refunds</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input -->
+        <div class="chat-input-area">
+          <div class="input-box">
+            <textarea id="chat-input" rows="1" placeholder="Ask anything — I'll find the answer…" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <div class="input-actions">
+              <button class="input-btn" onclick="toast('File attached','t-g')"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 3a2.5 2.5 0 015 0v9a1.5 1.5 0 01-3 0V5a.5.5 0 011 0v7a.5.5 0 001 0V3a1.5 1.5 0 00-3 0v9a2.5 2.5 0 005 0V5a.5.5 0 011 0v7a3.5 3.5 0 11-7 0V3z"/></svg></button>
+              <button class="send-btn" onclick="sendMsg()"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M15.964.686a.5.5 0 00-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 00-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 00.886-.083l6-15Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 00-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/></svg></button>
+            </div>
+          </div>
+          <div class="input-hint">Nexus AI can make mistakes. Verify important information.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── EMAIL ── -->
+  <div id="p-email" class="page">
+    <div class="email-shell">
+      <div class="email-list-panel">
+        <div class="email-panel-top">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-size:.72rem;font-weight:700;color:var(--text-w3);letter-spacing:.08em;text-transform:uppercase">Inbox</div>
+            <button class="btn btn-teal btn-sm" onclick="toast('Compose window ready','t-g')">+ Compose</button>
+          </div>
+          <div class="email-tabs">
+            <div class="email-tab active">All</div>
+            <div class="email-tab" onclick="tabSwitch(this)">Unread</div>
+            <div class="email-tab" onclick="tabSwitch(this)">Flagged</div>
+          </div>
+        </div>
+        <div class="e-list">
+          <div class="e-item unread active" onclick="selEmail(this,0)">
+            <div class="e-sender">Marcus Webb</div>
+            <div class="e-subj">Billing Invoice — August 2024</div>
+            <div class="e-prev">I noticed a discrepancy in my last invoice...</div>
+            <div class="e-meta"><span class="e-pill pending">Pending</span><span class="e-time">9:14 AM</span></div>
+          </div>
+          <div class="e-item unread" onclick="selEmail(this,1)">
+            <div class="e-sender">Priya Sharma</div>
+            <div class="e-subj">URGENT: Cannot access my account</div>
+            <div class="e-prev">I've been locked out since last night...</div>
+            <div class="e-meta"><span class="e-pill escalated">Escalated</span><span class="e-time">8:50 AM</span></div>
+          </div>
+          <div class="e-item unread" onclick="selEmail(this,2)">
+            <div class="e-sender">Tom Chen</div>
+            <div class="e-subj">Feature Request: Dark Mode</div>
+            <div class="e-prev">Would love to see a dark mode option...</div>
+            <div class="e-meta"><span class="e-pill ai">AI Draft</span><span class="e-time">8:22 AM</span></div>
+          </div>
+          <div class="e-item" onclick="selEmail(this,3)">
+            <div class="e-sender">Sarah Kim</div>
+            <div class="e-subj">API Integration — 401 errors</div>
+            <div class="e-prev">After updating to v2.3, webhooks stopped...</div>
+            <div class="e-meta"><span class="e-pill replied">Replied</span><span class="e-time">Yesterday</span></div>
+          </div>
+          <div class="e-item" onclick="selEmail(this,4)">
+            <div class="e-sender">Dev Team · System</div>
+            <div class="e-subj">Deployment v2.4.1 complete</div>
+            <div class="e-prev">All services deployed successfully to prod...</div>
+            <div class="e-meta"><span class="e-time">Yesterday</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="email-view">
+        <div class="ev-header">
+          <div class="ev-subject" id="ev-subj">Billing Invoice — August 2024</div>
+          <div class="ev-from">From: <strong id="ev-from">Marcus Webb</strong> &lt;marcus@company.io&gt; · To: support@assistdesk.com</div>
+          <div class="ev-actions">
+            <button class="btn btn-ghost btn-sm" onclick="toast('Reply sent!','t-g')">Reply</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Email forwarded','t-a')">Forward</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Marked escalated','t-a')">Escalate</button>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--red)" onclick="toast('Archived','t-r')">Archive</button>
+          </div>
+        </div>
+        <div class="ev-body">
+          <p>Hi Support Team,</p>
+          <p>I noticed a discrepancy in my invoice for August 2024. The amount charged was <strong>$189.99</strong>, but based on my subscription (Professional — $149/mo), I should have been charged $149.99. Could you look into this and issue a refund for the $40 difference?</p>
+          <p>My account ID is <code style="font-family:var(--font-mono);font-size:.78rem;background:rgba(255,255,255,.06);padding:1px 5px;border-radius:4px;color:var(--teal)">ACC-20491</code>. I've attached the PDF invoice.</p>
+          <p>Thank you,<br>Marcus Webb</p>
+
+          <div class="ai-box">
+            <div class="ai-box-label">
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11.251.068a.5.5 0 01.227.58L9.677 6.5H13a.5.5 0 01.364.843l-8 8.5a.5.5 0 01-.842-.49L6.323 9.5H3a.5.5 0 01-.364-.843l8-8.5a.5.5 0 01.615-.09z"/></svg>
+              Nexus AI · Suggested Reply
+            </div>
+            <p>Hi Marcus, thank you for reaching out. I've reviewed your account (ACC-20491) and confirmed the August charge was incorrect. A refund of $40 will be applied to your payment method within 3–5 business days. I apologize for the inconvenience.</p>
+            <div class="ai-box-actions">
+              <button class="btn btn-outline-teal btn-sm" onclick="useAI()">Use This</button>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Regenerating reply…','t-a')">Regenerate</button>
+              <button class="btn btn-ghost btn-sm" onclick="toast('Suggestion dismissed','t-r')">Dismiss</button>
+            </div>
+          </div>
+        </div>
+        <div class="compose-panel">
+          <textarea class="compose-input" id="comp-input" placeholder="Write your reply…"></textarea>
+          <div class="compose-footer">
+            <button class="btn btn-teal btn-sm" onclick="sendReply()">
+              <svg viewBox="0 0 16 16" fill="currentColor" style="width:12px;height:12px"><path d="M15.964.686a.5.5 0 00-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 00-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 00.886-.083l6-15z"/></svg>
+              Send Reply
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Saved as draft','t-a')">Save Draft</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Template selected','t-a')" style="margin-left:auto">Templates</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SERVICES ── -->
+  <div id="p-services" class="page">
+    <div class="services-page">
+      <div class="dash-header">
+        <div class="dash-title">Service <span>Control</span></div>
+        <div class="dash-sub">3 running · 1 warning · 1 stopped — Last checked 2 min ago</div>
+      </div>
+
+      <div class="sv-grid">
+        <!-- Email Engine -->
+        <div class="sv-card run">
+          <div class="sv-head">
+            <div class="sv-ico teal"><svg viewBox="0 0 16 16" fill="var(--teal)"><path d="M.05 3.555A2 2 0 012 2h12a2 2 0 011.95 1.555L8 8.414.05 3.555z"/><path d="M0 4.697v7.104l5.803-3.558L0 4.697z"/></svg></div>
+            <div class="sv-info"><div class="sv-info-name">Email Engine</div><div class="sv-info-desc">SMTP processor & delivery queue</div></div>
+            <div class="sv-badge run"><div class="bd"></div>Running</div>
+          </div>
+          <div class="sv-metrics">
+            <div class="sv-metric"><div class="sv-metric-val">836</div><div class="sv-metric-label">Processed</div></div>
+            <div class="sv-metric"><div class="sv-metric-val">99.8%</div><div class="sv-metric-label">Uptime</div></div>
+            <div class="sv-metric"><div class="sv-metric-val">48ms</div><div class="sv-metric-label">Latency</div></div>
+          </div>
+          <div class="sv-toggle-row">
+            <div class="toggle on" id="t-email" onclick="toggleSvc('Email Engine',this)"></div>
+            <span class="toggle-lbl">Service Active</span>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="toast('Restarting Email Engine…','t-a')">Restart</button>
+          </div>
+        </div>
+
+        <!-- API Gateway -->
+        <div class="sv-card warn">
+          <div class="sv-head">
+            <div class="sv-ico amber"><svg viewBox="0 0 16 16" fill="var(--amber)"><path d="M5.52.359A.5.5 0 016 0h4a.5.5 0 01.474.658L8.694 6H12.5a.5.5 0 01.395.807l-7 9a.5.5 0 01-.873-.454L6.823 9.5H3.5a.5.5 0 01-.48-.641l2.5-8.5z"/></svg></div>
+            <div class="sv-info"><div class="sv-info-name">API Gateway</div><div class="sv-info-desc">Request routing & rate limiting</div></div>
+            <div class="sv-badge warn"><div class="bd"></div>Warning</div>
+          </div>
+          <div class="sv-metrics">
+            <div class="sv-metric"><div class="sv-metric-val" style="color:var(--amber)">524ms</div><div class="sv-metric-label">P95 Latency</div></div>
+            <div class="sv-metric"><div class="sv-metric-val">98.2%</div><div class="sv-metric-label">Uptime</div></div>
+            <div class="sv-metric"><div class="sv-metric-val" style="color:var(--amber)">12</div><div class="sv-metric-label">Errors/min</div></div>
+          </div>
+          <div class="sv-toggle-row">
+            <div class="toggle on" id="t-api" onclick="toggleSvc('API Gateway',this)"></div>
+            <span class="toggle-lbl">Service Active</span>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--amber)" onclick="toast('Investigating API Gateway…','t-a')">Investigate</button>
+          </div>
+        </div>
+
+        <!-- Sync Worker -->
+        <div class="sv-card stop">
+          <div class="sv-head">
+            <div class="sv-ico red"><svg viewBox="0 0 16 16" fill="var(--red)"><path fill-rule="evenodd" d="M8 3a5 5 0 105 5.5.5.5 0 011 0A6 6 0 118 2v1z"/><path d="M10.232.315a.5.5 0 01.585.07l2.5 2.5a.5.5 0 01-.585.815L10.5 2.5l-.732 1.2a.5.5 0 01-.854-.524l1-1.64a.5.5 0 01.318-.22z"/></svg></div>
+            <div class="sv-info"><div class="sv-info-name">Sync Worker</div><div class="sv-info-desc">Cross-service data sync process</div></div>
+            <div class="sv-badge stop"><div class="bd"></div>Stopped</div>
+          </div>
+          <div class="sv-metrics">
+            <div class="sv-metric"><div class="sv-metric-val" style="color:var(--red)">0</div><div class="sv-metric-label">Processed</div></div>
+            <div class="sv-metric"><div class="sv-metric-val" style="color:var(--red)">0%</div><div class="sv-metric-label">Uptime</div></div>
+            <div class="sv-metric"><div class="sv-metric-val">—</div><div class="sv-metric-label">Latency</div></div>
+          </div>
+          <div class="sv-toggle-row">
+            <div class="toggle" id="t-sync" onclick="toggleSvc('Sync Worker',this)"></div>
+            <span class="toggle-lbl">Service Stopped</span>
+            <button class="btn btn-teal btn-sm" style="margin-left:auto" onclick="confirmStart('Sync Worker')">Start</button>
+          </div>
+        </div>
+
+        <!-- AI Chat Engine -->
+        <div class="sv-card run">
+          <div class="sv-head">
+            <div class="sv-ico blue"><svg viewBox="0 0 16 16" fill="#3BB9FF"><path fill-rule="evenodd" d="M2.165 15.803l.02-.004c1.83-.363 2.948-.842 3.468-1.105A9.06 9.06 0 008 15c4.418 0 8-3.134 8-7s-3.582-7-8-7-8 3.134-8 7c0 1.76.743 3.37 1.97 4.6a10.437 10.437 0 01-.524 2.318l-.003.011z" clip-rule="evenodd"/></svg></div>
+            <div class="sv-info"><div class="sv-info-name">AI Chat Engine</div><div class="sv-info-desc">Nexus AI knowledge assistant</div></div>
+            <div class="sv-badge run"><div class="bd"></div>Running</div>
+          </div>
+          <div class="sv-metrics">
+            <div class="sv-metric"><div class="sv-metric-val">137</div><div class="sv-metric-label">Sessions</div></div>
+            <div class="sv-metric"><div class="sv-metric-val">100%</div><div class="sv-metric-label">Uptime</div></div>
+            <div class="sv-metric"><div class="sv-metric-val">94%</div><div class="sv-metric-label">Resolved</div></div>
+          </div>
+          <div class="sv-toggle-row">
+            <div class="toggle on" id="t-ai" onclick="toggleSvc('AI Chat Engine',this)"></div>
+            <span class="toggle-lbl">Service Active</span>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="toast('Flushing AI cache…','t-a')">Clear Cache</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="log-panel">
+        <div class="log-header">
+          <div class="card-title" style="font-size:.68rem;font-weight:700;color:var(--text-w3);letter-spacing:.08em;text-transform:uppercase">System Logs</div>
+          <div style="display:flex;gap:7px">
+            <button class="btn btn-ghost btn-sm" onclick="toast('Logs downloaded','t-g')">Export</button>
+            <button class="btn btn-ghost btn-sm" onclick="toast('Logs cleared','t-a')">Clear</button>
+          </div>
+        </div>
+        <div class="log-box">
+          <div class="log-l g">[<span class="ts">2026-03-20 10:45:22</span>] INFO  Email Engine restarted — PID 4821 — healthy</div>
+          <div class="log-l a">[<span class="ts">2026-03-20 08:30:11</span>] WARN  API Gateway P95 latency exceeded threshold (524ms)</div>
+          <div class="log-l r">[<span class="ts">2026-03-20 07:45:03</span>] ERROR Sync Worker exited with code 1 — OOMKilled</div>
+          <div class="log-l">[<span class="ts">2026-03-20 07:44:58</span>] INFO  Sync Worker memory at 98% — threshold exceeded</div>
+          <div class="log-l g">[<span class="ts">2026-03-19 17:20:44</span>] INFO  AI Chat Engine v1.6 deployed — 137 sessions active</div>
+          <div class="log-l">[<span class="ts">2026-03-19 15:00:02</span>] INFO  Scheduled backup complete — 2.4 GB archived</div>
+          <div class="log-l g">[<span class="ts">2026-03-19 09:00:00</span>] INFO  All services health check passed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- Confirm Modal -->
+<div class="overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-ico" id="m-ico"><svg id="m-svg" viewBox="0 0 16 16" fill="currentColor"></svg></div>
+    <div class="modal-title" id="m-title">Are you sure?</div>
+    <div class="modal-desc" id="m-desc">This action may affect active users.</div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeOverlay()">Cancel</button>
+      <button class="btn" id="m-ok" onclick="doAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+// Theme: initialize and toggle (persists in localStorage)
+(function(){
+  const root = document.documentElement;
+  const saved = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initial = saved || (prefersDark ? 'dark' : 'light');
+  if (initial === 'light') root.setAttribute('data-theme','light'); else root.removeAttribute('data-theme');
+
+  window.updateThemeIcon = function(){
+    const ic = document.getElementById('theme-icon'); if(!ic) return;
+    if (root.getAttribute('data-theme') === 'light') {
+      ic.innerHTML = '<path d="M6.76 4.84l-1.8-1.79L3.17 5.84l1.79 1.8 1.8-1.8zM1 13h2v-2H1v2zm10 6h2v-2h-2v2zM20 13h2v-2h-2v2zM17.24 19.16l1.79 1.8 1.79-1.79-1.8-1.8-1.78 1.79zM12 6a6 6 0 100 12 6 6 0 000-12zM4 4h2V2H4v2zM18 4h2V2h-2v2z"/>';
+    } else {
+      ic.innerHTML = '<path d="M21.64 13a9 9 0 11-10.64-10.64 7 7 0 1010.64 10.64z"/>';
+    }
+  };
+
+  window.toggleTheme = function(){
+    if (root.getAttribute('data-theme') === 'light') {
+      root.removeAttribute('data-theme');
+      localStorage.setItem('theme','dark');
+    } else {
+      root.setAttribute('data-theme','light');
+      localStorage.setItem('theme','light');
+    }
+    updateThemeIcon();
+  };
+
+  // expose initial update
+  document.addEventListener('DOMContentLoaded', updateThemeIcon);
+  // also run immediately for situations where DOMContentLoaded already fired
+  updateThemeIcon();
+})();
+// ── Navigation ──────────────────────────────────────────────
+const titles = {dashboard:'Overview',chatbot:'AI Chat Assistant',email:'Email Assistant',services:'Service Control'};
+function nav(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('p-' + page).classList.add('active');
+  document.getElementById('tbar-title').textContent = titles[page];
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+// ── Toast ────────────────────────────────────────────────────
+const tIcons = {
+  't-g':'<svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.854 3.646a.5.5 0 010 .708l-7 7a.5.5 0 01-.708 0l-3.5-3.5a.5.5 0 11.708-.708L6.5 10.293l6.646-6.647a.5.5 0 01.708 0z"/></svg>',
+  't-r':'<svg viewBox="0 0 16 16" fill="currentColor"><path d="M4.646 4.646a.5.5 0 01.708 0L8 7.293l2.646-2.647a.5.5 0 01.708.708L8.707 8l2.647 2.646a.5.5 0 01-.708.708L8 8.707l-2.646 2.647a.5.5 0 01-.708-.708L7.293 8 4.646 5.354a.5.5 0 010-.708z"/></svg>',
+  't-a':'<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 15A7 7 0 108 1a7 7 0 000 14zm0 1A8 8 0 118 0a8 8 0 010 16z"/><path d="M7.002 11a1 1 0 112 0 1 1 0 01-2 0zM7.1 4.995a.905.905 0 111.8 0l-.35 3.507a.552.552 0 01-1.1 0L7.1 4.995z"/></svg>',
+};
+function toast(msg, type='t-g') {
+  const w = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = (tIcons[type]||tIcons['t-g']) + `<span>${msg}</span>`;
+  w.appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+}
+
+// ── Chat ─────────────────────────────────────────────────────
+const chatHistory = [
+  [
+    {role:'user',text:'How do I reset my password?'},
+    {role:'bot',text:'<strong>To reset your password:</strong><br>1. Go to the login page and click <strong>"Forgot Password"</strong><br>2. Enter your registered email address<br>3. Check your inbox for a reset link (expires in 30 mins)<br>4. Click the link and set a new password<br><br>If you use SSO (Okta, Azure AD), contact your IT admin.',
+     sources:['Password Guide','Account Security','SSO Setup'],
+     suggestions:['What if I lost my 2FA?','How to enable SSO?','Password requirements']}
+  ],
+  [
+    {role:'user',text:'SMTP setup is not working'},
+    {role:'bot',text:'Let\'s troubleshoot your SMTP configuration. The most common issues are:<br><br>• <strong>Wrong port</strong> — use <code>587</code> for TLS or <code>465</code> for SSL<br>• <strong>Auth failure</strong> — check your username/password in Settings → Email<br>• <strong>Firewall blocking</strong> — ensure ports 465/587 are open<br><br>Try clicking <strong>Test Connection</strong> in Settings to get a specific error code.',
+     sources:['SMTP Guide','Email Troubleshoot'],
+     suggestions:['Configure TLS certificate','Set up bounce handling','DKIM/SPF records']}
+  ]
+];
+let currentChat = 0;
+let isWelcome = true;
+
+function loadChat(el, idx) {
+  document.querySelectorAll('.ch-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  currentChat = idx;
+  const msgs = document.getElementById('chat-msgs');
+  document.getElementById('chat-welcome').style.display = 'none';
+  isWelcome = false;
+  // Remove old bubbles
+  msgs.querySelectorAll('.msg-row').forEach(m => m.remove());
+  const chat = chatHistory[idx] || chatHistory[0];
+  chat.forEach(m => renderMsg(m, false));
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function renderMsg(m, animate=true) {
+  const msgs = document.getElementById('chat-msgs');
+  const row = document.createElement('div');
+  row.className = `msg-row ${m.role}${animate?' fade-up':''}`;
+
+  const avDiv = `<div class="msg-avatar ${m.role}">${m.role==='bot'?'AI':'AR'}</div>`;
+  const now = new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});
+
+  let extras = '';
+  if (m.role==='bot' && m.sources) {
+    extras += `<div class="msg-sources"><div class="src-label">Sources</div>` +
+      m.sources.map(s=>`<span class="src-pill"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M5 4a.5.5 0 000 1h6a.5.5 0 000-1H5zm-.5 2.5A.5.5 0 015 6h6a.5.5 0 010 1H5a.5.5 0 01-.5-.5zM5 8a.5.5 0 000 1h6a.5.5 0 000-1H5zm0 2a.5.5 0 000 1h3a.5.5 0 000-1H5z"/><path d="M2 2a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V2zm10-1H4a1 1 0 00-1 1v12a1 1 0 001 1h8a1 1 0 001-1V2a1 1 0 00-1-1z"/></svg>${s}</span>`).join('') + `</div>`;
+  }
+  if (m.role==='bot' && m.suggestions) {
+    extras += `<div class="msg-suggestions">` + m.suggestions.map(s=>`<div class="sugg-chip" onclick="askTopic('${s}')">${s}</div>`).join('') + `</div>`;
+  }
+
+  row.innerHTML = avDiv + `<div><div class="msg-bubble ${m.role}">${m.text}</div>${extras}<div class="msg-time">${now}</div></div>`;
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+const botReplies = {
+  'How do I reset my password?': {text:'<strong>To reset your password:</strong><br>1. Go to the login page → <strong>Forgot Password</strong><br>2. Enter your email address<br>3. Click the reset link in your inbox (expires in 30 mins)<br>4. Set a new strong password<br><br>For SSO users, please contact your IT admin.', sources:['Password Guide','SSO Docs'], suggestions:['Lost my 2FA device','Password policy','Enable SSO']},
+  'How do I configure SMTP email?': {text:'SMTP setup in 4 steps:<br><br>1. Go to <strong>Settings → Email → SMTP</strong><br>2. Enter your host (e.g. <code>smtp.gmail.com</code>)<br>3. Set port <code>587</code> (TLS) or <code>465</code> (SSL)<br>4. Add credentials and click <strong>Test Connection</strong><br><br>Enable TLS for secure delivery. Need help with DKIM?', sources:['SMTP Guide','Email Deliverability'], suggestions:['Set up DKIM/SPF','Bounce handling','TLS certificates']},
+  'What are the API rate limits?': {text:'Our API rate limits by plan:<br><br>• <strong>Free</strong> — 60 req/min<br>• <strong>Professional</strong> — 500 req/min<br>• <strong>Enterprise</strong> — Custom<br><br>When you hit a limit, you\'ll receive HTTP <code>429</code>. Check the <code>Retry-After</code> header and implement exponential backoff starting at 1 second.', sources:['API Reference','Rate Limits'], suggestions:['Implement backoff','Upgrade plan','Check current usage']},
+  'How do I upgrade my billing plan?': {text:'To upgrade your plan:<br><br>1. Go to <strong>Settings → Billing → Plans</strong><br>2. Compare features and select your plan<br>3. Enter payment details (all major cards accepted)<br>4. Upgrade takes effect immediately<br><br>Need a custom Enterprise quote? Contact <code>sales@assistdesk.com</code>', sources:['Billing FAQ','Plans Overview'], suggestions:['Enterprise pricing','Cancel subscription','Download invoices']},
+};
+
+function askTopic(q) {
+  if (isWelcome) {
+    document.getElementById('chat-welcome').style.display = 'none';
+    isWelcome = false;
+  }
+  renderMsg({role:'user', text:q});
+  // Show typing
+  const msgs = document.getElementById('chat-msgs');
+  const typing = document.createElement('div');
+  typing.className = 'msg-row';
+  typing.id = 'typing';
+  typing.innerHTML = `<div class="msg-avatar bot">AI</div><div><div class="msg-bubble bot"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`;
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+  setTimeout(() => {
+    typing.remove();
+    const reply = botReplies[q] || {text:`I found information about <strong>${q}</strong>. Let me pull up the most relevant articles from the knowledge base for you. You can also browse specific categories using the topic chips on the left.`, sources:['Knowledge Base'], suggestions:['Browse all articles','Contact support','Related topics']};
+    renderMsg({role:'bot', ...reply});
+  }, 1200);
+}
+
+function sendMsg() {
+  const inp = document.getElementById('chat-input');
+  const q = inp.value.trim();
+  if (!q) return;
+  inp.value = ''; inp.style.height = '';
+  if (isWelcome) { document.getElementById('chat-welcome').style.display = 'none'; isWelcome = false; }
+  renderMsg({role:'user', text:q});
+  const msgs = document.getElementById('chat-msgs');
+  const typing = document.createElement('div');
+  typing.className = 'msg-row'; typing.id = 'typing';
+  typing.innerHTML = `<div class="msg-avatar bot">AI</div><div><div class="msg-bubble bot"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`;
+  msgs.appendChild(typing); msgs.scrollTop = msgs.scrollHeight;
+  setTimeout(() => {
+    typing.remove();
+    const match = Object.keys(botReplies).find(k => q.toLowerCase().includes(k.toLowerCase().split(' ').slice(0,3).join(' ')));
+    const reply = match ? botReplies[match] : {text:`I searched the knowledge base for <strong>"${q}"</strong>. Based on our documentation, I recommend checking the Getting Started guide or contacting our support team for personalized help. Is there a specific area you'd like me to focus on?`, sources:['Knowledge Base','Support Docs'], suggestions:['Browse topics','Contact support','Try another question']};
+    renderMsg({role:'bot', ...reply});
+  }, 1200);
+}
+
+function newChat() {
+  const msgs = document.getElementById('chat-msgs');
+  msgs.querySelectorAll('.msg-row').forEach(m => m.remove());
+  document.getElementById('chat-welcome').style.display = '';
+  isWelcome = true;
+  document.querySelectorAll('.ch-item').forEach(i => i.classList.remove('active'));
+  toast('New conversation started','t-g');
+}
+
+function clearChat() {
+  const msgs = document.getElementById('chat-msgs');
+  msgs.querySelectorAll('.msg-row').forEach(m => m.remove());
+  document.getElementById('chat-welcome').style.display = '';
+  isWelcome = true;
+}
+
+function handleKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+
+// ── Email ─────────────────────────────────────────────────────
+const emails = [
+  {subj:'Billing Invoice — August 2024',from:'Marcus Webb'},
+  {subj:'URGENT: Cannot access my account',from:'Priya Sharma'},
+  {subj:'Feature Request: Dark Mode',from:'Tom Chen'},
+  {subj:'API Integration — 401 errors',from:'Sarah Kim'},
+  {subj:'Deployment v2.4.1 complete',from:'Dev Team · System'},
+];
+function selEmail(el, i) {
+  document.querySelectorAll('.e-item').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('ev-subj').textContent = emails[i].subj;
+  document.getElementById('ev-from').textContent = emails[i].from;
+}
+function tabSwitch(el) { document.querySelectorAll('.email-tab').forEach(t => t.classList.remove('active')); el.classList.add('active'); }
+function useAI() { document.getElementById('comp-input').value = "Hi Marcus, thank you for reaching out. I've reviewed your account (ACC-20491) and confirmed the August charge was incorrect. A refund of $40 will be applied within 3–5 business days. I apologize for the inconvenience.\n\nBest regards,\nArnav Sharma · Support Lead"; toast('AI suggestion applied','t-g'); }
+function sendReply() { const v=document.getElementById('comp-input').value.trim(); if(!v){toast('Write a reply first','t-a');return;} document.getElementById('comp-input').value=''; toast('Reply sent!','t-g'); }
+
+// ── Services ─────────────────────────────────────────────────
+let pendingAction = null;
+function toggleSvc(name, el) {
+  const on = el.classList.contains('on');
+  pendingAction = {name, el, on};
+  const m = document.getElementById;
+  m('m-ico').className = on ? 'modal-ico r' : 'modal-ico g';
+  m('m-svg').innerHTML = on ? '<path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zM6.5 5.5a.5.5 0 000 1h3a.5.5 0 000-1h-3zm0 2.5a.5.5 0 000 1h3a.5.5 0 000-1h-3z" clip-rule="evenodd"/>' : '<path fill-rule="evenodd" d="M8 15A7 7 0 108 1a7 7 0 000 14zm3.354-9.354a.5.5 0 00-.708-.708L7 8.793 5.354 7.146a.5.5 0 00-.708.708l2 2a.5.5 0 00.708 0l4-4z" clip-rule="evenodd"/>';
+  m('m-title').textContent = on ? `Stop ${name}?` : `Start ${name}?`;
+  m('m-desc').textContent = on ? `Stopping ${name} will pause all related processing. Active jobs will queue until restart.` : `Starting ${name} will resume all pending operations and processing.`;
+  const btn = m('m-ok');
+  btn.className = on ? 'btn btn-red' : 'btn btn-teal';
+  btn.textContent = on ? 'Stop Service' : 'Start Service';
+  document.getElementById('overlay').classList.add('show');
+}
+function confirmStop() { document.getElementById('t-email') && toggleSvc('Email Engine', document.getElementById('t-email')); }
+function confirmStart(name) { const el = document.getElementById('t-sync'); if(el) toggleSvc(name, el); }
+function doAction() {
+  if (!pendingAction) return;
+  const {name, el, on} = pendingAction;
+  el.classList.toggle('on', !on);
+  toast(`${name} ${on?'stopped':'started'} successfully`, on?'t-r':'t-g');
+  closeOverlay();
+  pendingAction = null;
+}
+function closeOverlay(e) {
+  if (e && e.target !== document.getElementById('overlay')) return;
+  document.getElementById('overlay').classList.remove('show');
+}
+</script>
+</body>
+</html>
