@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridFlow — Utility Service Management</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --surface3: #1e2330;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --text2: #8b90a0;
+    --text3: #555b6e;
+    --accent: #4f8ef7;
+    --accent2: #3b6fd4;
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.12);
+    --yellow: #f59e0b;
+    --yellow-dim: rgba(245,158,11,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.12);
+    --blue-dim: rgba(79,142,247,0.12);
+    --purple: #a855f7;
+    --purple-dim: rgba(168,85,247,0.12);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --sidebar-w: 220px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar-w); min-height: 100vh; background: var(--surface);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    padding: 0; position: fixed; left: 0; top: 0; z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 22px 20px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), #7c3aed);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-text { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo-sub { font-size: 10px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 1px; }
+
+  .nav-section { padding: 16px 12px 8px; }
+  .nav-label { font-size: 10px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; padding: 0 8px; margin-bottom: 6px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+    border-radius: var(--radius-sm); cursor: pointer; font-size: 13.5px; font-weight: 500;
+    color: var(--text2); transition: all 0.15s; margin-bottom: 2px; position: relative;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--blue-dim); color: var(--accent); }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 60%; background: var(--accent); border-radius: 0 2px 2px 0;
+  }
+  .nav-icon { width: 18px; text-align: center; font-size: 14px; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto; background: var(--red); color: #fff; font-size: 10px;
+    font-weight: 600; padding: 1px 6px; border-radius: 10px; font-family: 'JetBrains Mono', monospace;
+  }
+  .nav-badge.blue { background: var(--accent); }
+
+  .sidebar-bottom { margin-top: auto; padding: 16px 12px; border-top: 1px solid var(--border); }
+  .user-card { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--radius-sm); cursor: pointer; }
+  .user-card:hover { background: var(--surface2); }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #4f8ef7, #7c3aed); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+  .user-info { flex: 1; }
+  .user-name { font-size: 13px; font-weight: 500; }
+  .user-role { font-size: 11px; color: var(--text3); }
+
+  /* MAIN */
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; overflow: hidden; }
+
+  /* TOPBAR */
+  .topbar {
+    height: 58px; background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; gap: 16px; position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; flex: 1; }
+  .search-bar {
+    display: flex; align-items: center; gap: 8px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 12px;
+    width: 260px; font-size: 13px; color: var(--text2); cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .search-bar:hover { border-color: var(--border2); }
+  .topbar-actions { display: flex; align-items: center; gap: 8px; }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--surface2);
+    border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 15px; transition: all 0.15s; position: relative;
+  }
+  .icon-btn:hover { background: var(--surface3); border-color: var(--border2); }
+  .notif-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: var(--red); border-radius: 50%; border: 1.5px solid var(--surface); }
+
+  /* CONTENT */
+  .content { flex: 1; overflow-y: auto; padding: 28px 28px; }
+
+  /* PAGE SECTIONS */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* PAGE HEADER */
+  .page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+  .page-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+  .page-subtitle { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px; padding: 9px 16px;
+    border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s; border: none; font-family: 'DM Sans', sans-serif;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+  .btn-secondary:hover { background: var(--surface3); }
+  .btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+  .btn-success { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  /* KPI GRID */
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 20px; position: relative; overflow: hidden; cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .kpi-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .kpi-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .kpi-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+  .kpi-change { font-size: 12px; display: flex; align-items: center; gap: 4px; }
+  .kpi-change.up { color: var(--green); }
+  .kpi-change.down { color: var(--red); }
+  .kpi-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; }
+
+  /* CHARTS GRID */
+  .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  /* CARD */
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;
+  }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .card-title { font-size: 14px; font-weight: 600; }
+  .card-subtitle { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* CHART BARS */
+  .chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
+  .chart-bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .chart-bar { width: 100%; border-radius: 4px 4px 0 0; transition: opacity 0.15s; cursor: pointer; }
+  .chart-bar:hover { opacity: 0.8; }
+  .chart-bar-label { font-size: 10px; color: var(--text3); }
+
+  /* DONUT */
+  .donut-chart { display: flex; align-items: center; gap: 20px; }
+  .donut-svg { flex-shrink: 0; }
+  .donut-legend { flex: 1; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-label { color: var(--text2); flex: 1; }
+  .legend-pct { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text3); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 1px solid var(--border); }
+  tbody td { padding: 13px 14px; border-bottom: 1px solid var(--border); color: var(--text2); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background 0.1s; cursor: pointer; }
+  tbody tr:hover td { background: var(--surface2); }
+  td.bold { color: var(--text); font-weight: 500; }
+
+  /* BADGE */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
+    border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge.active { background: var(--green-dim); color: var(--green); }
+  .badge.pending { background: var(--yellow-dim); color: var(--yellow); }
+  .badge.suspended { background: var(--yellow-dim); color: var(--yellow); }
+  .badge.closed { background: var(--red-dim); color: var(--red); }
+  .badge.transferred { background: var(--purple-dim); color: var(--purple); }
+  .badge.scheduled { background: var(--blue-dim); color: var(--accent); }
+  .badge.paid { background: var(--green-dim); color: var(--green); }
+  .badge.overdue { background: var(--red-dim); color: var(--red); }
+  .badge.requested { background: var(--blue-dim); color: var(--accent); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; background: var(--surface2); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 20px; width: fit-content; }
+  .tab { padding: 7px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .tab.active { background: var(--surface3); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+
+  /* FILTERS ROW */
+  .filters-row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .filter-select {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 8px 12px; font-size: 13px; color: var(--text); font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+  }
+  .search-input {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 8px 12px; font-size: 13px; color: var(--text); font-family: 'DM Sans', sans-serif;
+    width: 240px;
+  }
+  .search-input::placeholder { color: var(--text3); }
+  .filter-select:focus, .search-input:focus { outline: none; border-color: var(--accent); }
+
+  /* PROFILE + SERVICE PAGES */
+  .two-col { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+  .profile-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  .profile-avatar-lg { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--purple)); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; margin-bottom: 16px; }
+  .profile-name { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .profile-id { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-bottom: 16px; }
+  .profile-field { margin-bottom: 12px; }
+  .profile-field-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; }
+  .profile-field-value { font-size: 13px; color: var(--text); }
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+  .stat-row { display: flex; gap: 16px; }
+  .mini-stat { flex: 1; text-align: center; padding: 12px; background: var(--surface2); border-radius: var(--radius-sm); }
+  .mini-stat-val { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+  .mini-stat-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* SERVICE STATUS BANNER */
+  .service-banner {
+    border-radius: var(--radius); padding: 20px 24px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    border: 1px solid;
+  }
+  .service-banner.active { background: var(--green-dim); border-color: rgba(34,197,94,0.25); }
+  .service-banner.suspended { background: var(--yellow-dim); border-color: rgba(245,158,11,0.25); }
+  .service-banner.closed { background: var(--red-dim); border-color: rgba(239,68,68,0.25); }
+  .service-banner-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; opacity: 0.7; }
+  .service-banner-status { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; }
+  .service-banner-actions { display: flex; gap: 10px; }
+
+  /* METER VISUAL */
+  .meter-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .meter-card { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px; }
+  .meter-icon { font-size: 20px; margin-bottom: 8px; }
+  .meter-val { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 500; color: var(--accent); }
+  .meter-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* USAGE BAR */
+  .usage-bar-wrap { margin-bottom: 8px; }
+  .usage-bar-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .usage-bar-track { height: 8px; background: var(--surface3); border-radius: 4px; overflow: hidden; }
+  .usage-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+
+  /* STEPPER */
+  .stepper { display: flex; align-items: center; margin-bottom: 28px; }
+  .step-item { display: flex; align-items: center; }
+  .step-circle {
+    width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; border: 2px solid var(--border2); color: var(--text3);
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .step-circle.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .step-circle.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .step-label { font-size: 12px; color: var(--text3); margin-left: 8px; white-space: nowrap; }
+  .step-label.active { color: var(--text); font-weight: 500; }
+  .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 12px; min-width: 24px; }
+
+  /* FORM ELEMENTS */
+  .form-group { margin-bottom: 18px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 7px; display: block; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,142,247,0.1); }
+  .form-input::placeholder { color: var(--text3); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* PLAN CARDS */
+  .plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .plan-card {
+    background: var(--surface2); border: 2px solid var(--border); border-radius: var(--radius);
+    padding: 18px; cursor: pointer; transition: all 0.15s;
+  }
+  .plan-card:hover { border-color: var(--border2); }
+  .plan-card.selected { border-color: var(--accent); background: var(--blue-dim); }
+  .plan-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .plan-price { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent); }
+  .plan-price span { font-size: 12px; color: var(--text3); font-family: 'DM Sans', sans-serif; }
+  .plan-feature { font-size: 12px; color: var(--text2); margin-top: 8px; display: flex; align-items: center; gap: 5px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border2); border-radius: 16px;
+    padding: 28px; width: 480px; max-height: 85vh; overflow-y: auto;
+    transform: scale(0.95) translateY(10px); transition: transform 0.2s;
+    box-shadow: var(--shadow);
+  }
+  .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 22px; }
+  .modal-footer { display: flex; gap: 10px; margin-top: 24px; justify-content: flex-end; }
+
+  /* BILLING BREAKDOWN */
+  .bill-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .bill-row:last-child { border-bottom: none; }
+  .bill-row.total { font-weight: 600; font-size: 15px; padding-top: 14px; }
+  .bill-row .label { color: var(--text2); }
+  .bill-row.total .label { color: var(--text); }
+  .bill-mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* TIMELINE */
+  .timeline { padding-left: 8px; }
+  .tl-item { display: flex; gap: 14px; margin-bottom: 18px; position: relative; }
+  .tl-line { position: absolute; left: 8px; top: 22px; bottom: -8px; width: 1px; background: var(--border); }
+  .tl-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--surface3); border: 2px solid var(--border2); flex-shrink: 0; margin-top: 2px; }
+  .tl-dot.green { background: var(--green-dim); border-color: var(--green); }
+  .tl-dot.blue { background: var(--blue-dim); border-color: var(--accent); }
+  .tl-dot.yellow { background: var(--yellow-dim); border-color: var(--yellow); }
+  .tl-content { flex: 1; }
+  .tl-title { font-size: 13px; font-weight: 500; color: var(--text); }
+  .tl-time { font-size: 11px; color: var(--text3); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+  /* NOTIFICATION DRAWER */
+  .drawer {
+    position: fixed; right: 0; top: 0; bottom: 0; width: 380px;
+    background: var(--surface); border-left: 1px solid var(--border2);
+    z-index: 200; transform: translateX(100%); transition: transform 0.25s;
+    display: flex; flex-direction: column; box-shadow: -8px 0 32px rgba(0,0,0,0.4);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-header { padding: 20px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .drawer-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 16px; }
+
+  /* NOTIF ITEM */
+  .notif-item { padding: 14px; border-radius: var(--radius-sm); margin-bottom: 8px; background: var(--surface2); cursor: pointer; transition: background 0.1s; border-left: 3px solid transparent; }
+  .notif-item:hover { background: var(--surface3); }
+  .notif-item.unread { border-left-color: var(--accent); }
+  .notif-item.warn { border-left-color: var(--yellow); }
+  .notif-item.danger { border-left-color: var(--red); }
+  .notif-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .notif-body { font-size: 12px; color: var(--text2); }
+  .notif-time { font-size: 11px; color: var(--text3); margin-top: 5px; font-family: 'JetBrains Mono', monospace; }
+
+  /* SUMMARY BOXES */
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .info-box { background: var(--surface2); border-radius: var(--radius-sm); padding: 14px; }
+  .info-box-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; }
+  .info-box-value { font-size: 14px; color: var(--text); font-weight: 500; }
+
+  /* FLOW STATE */
+  .step-content { animation: fadeIn 0.2s ease; }
+
+  /* REVIEW CONFIRM */
+  .confirm-section { background: var(--surface2); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 14px; }
+  .confirm-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; }
+  .confirm-key { color: var(--text3); }
+  .confirm-val { color: var(--text); font-weight: 500; }
+
+  .close-btn { background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 4px; border-radius: 4px; }
+  .close-btn:hover { color: var(--text); background: var(--surface3); }
+
+  /* MINI SPARKLINE */
+  .sparkline { display: flex; align-items: flex-end; gap: 2px; height: 32px; margin-top: 8px; }
+  .spark-bar { flex: 1; border-radius: 2px 2px 0 0; }
+
+  /* DATA MODEL PAGE */
+  .entity-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .entity-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .entity-name { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .entity-icon { font-size: 16px; }
+  .field-item { font-size: 12px; padding: 5px 8px; background: var(--surface2); border-radius: 4px; margin-bottom: 4px; display: flex; justify-content: space-between; }
+  .field-type { color: var(--text3); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+  /* STATE MACHINE */
+  .state-flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+  .state-node { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 14px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .state-node.active { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+  .state-node.start { background: var(--blue-dim); border-color: var(--accent); color: var(--accent); }
+  .state-node.end { background: var(--red-dim); border-color: var(--red); color: var(--red); }
+  .state-node.mid { background: var(--yellow-dim); border-color: var(--yellow); color: var(--yellow); }
+  .state-node.purple { background: var(--purple-dim); border-color: var(--purple); color: var(--purple); }
+  .state-arrow { font-size: 16px; color: var(--text3); margin: 0 6px; }
+
+  /* RESPONSIVE SCROLL */
+  .overflow-x { overflow-x: auto; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+
+  /* TRANSFER FLOW SPECIFICS */
+  .address-split { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 10px; align-items: center; }
+  .arrow-divider { text-align: center; font-size: 20px; color: var(--text3); padding-top: 24px; }
+
+  /* PRORATA PREVIEW */
+  .prorata-box { background: var(--blue-dim); border: 1px solid rgba(79,142,247,0.2); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 16px; }
+  .prorata-title { font-size: 12px; color: var(--accent); font-weight: 600; margin-bottom: 10px; letter-spacing: 0.5px; }
+
+  /* EMPTY STATE */
+  .empty { text-align: center; padding: 40px; color: var(--text3); }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">GridFlow</div>
+      <div class="logo-sub">Utility Platform</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="showPage('dashboard', this)">
+      <span class="nav-icon">⬛</span> Dashboard
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Management</div>
+    <div class="nav-item" onclick="showPage('customers', this)">
+      <span class="nav-icon">👤</span> Customers
+    </div>
+    <div class="nav-item" onclick="showPage('services', this)">
+      <span class="nav-icon">⚙️</span> Services
+      <span class="nav-badge blue">1.2k</span>
+    </div>
+    <div class="nav-item" onclick="showPage('requests', this)">
+      <span class="nav-icon">📋</span> Requests
+      <span class="nav-badge">14</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Finance</div>
+    <div class="nav-item" onclick="showPage('billing', this)">
+      <span class="nav-icon">💳</span> Billing
+    </div>
+    <div class="nav-item" onclick="showPage('reports', this)">
+      <span class="nav-icon">📊</span> Reports
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Flows</div>
+    <div class="nav-item" onclick="showPage('start-service', this)">
+      <span class="nav-icon">➕</span> Start Service
+    </div>
+    <div class="nav-item" onclick="showPage('transfer-service', this)">
+      <span class="nav-icon">🔄</span> Transfer
+    </div>
+    <div class="nav-item" onclick="showPage('data-model', this)">
+      <span class="nav-icon">🗄️</span> Data Model
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-avatar">RK</div>
+      <div class="user-info">
+        <div class="user-name">Ravi Kumar</div>
+        <div class="user-role">Operations Admin</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="search-bar">🔍 &nbsp;Search customers, services, IDs...</div>
+    <div class="topbar-actions">
+      <div class="icon-btn" onclick="toggleDrawer()">🔔<span class="notif-dot"></span></div>
+      <div class="icon-btn">⚙️</div>
+      <div class="user-avatar" style="width:36px;height:36px;font-size:13px;cursor:pointer;">RK</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Operations Dashboard</div>
+          <div class="page-subtitle">March 2025 · Real-time overview</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-secondary">📥 Export</button>
+          <button class="btn btn-primary" onclick="showPage('start-service', document.querySelector('[onclick*=start-service]'))">+ New Service</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card" onclick="showPage('services', document.querySelector('[onclick*=services]'))">
+          <div class="kpi-label">Active Services</div>
+          <div class="kpi-value" style="color:var(--green)">12,847</div>
+          <div class="kpi-change up">↑ 3.2% this month</div>
+          <div class="sparkline">
+            <div class="spark-bar" style="height:40%;background:var(--green);opacity:0.4"></div>
+            <div class="spark-bar" style="height:55%;background:var(--green);opacity:0.5"></div>
+            <div class="spark-bar" style="height:50%;background:var(--green);opacity:0.5"></div>
+            <div class="spark-bar" style="height:70%;background:var(--green);opacity:0.6"></div>
+            <div class="spark-bar" style="height:65%;background:var(--green);opacity:0.6"></div>
+            <div class="spark-bar" style="height:80%;background:var(--green);opacity:0.7"></div>
+            <div class="spark-bar" style="height:100%;background:var(--green)"></div>
+          </div>
+          <div class="kpi-accent" style="background:var(--green)"></div>
+        </div>
+        <div class="kpi-card" onclick="showPage('requests', document.querySelector('[onclick*=requests]'))">
+          <div class="kpi-label">New Requests</div>
+          <div class="kpi-value" style="color:var(--accent)">247</div>
+          <div class="kpi-change up">↑ 12 today</div>
+          <div class="sparkline">
+            <div class="spark-bar" style="height:60%;background:var(--accent);opacity:0.5"></div>
+            <div class="spark-bar" style="height:45%;background:var(--accent);opacity:0.5"></div>
+            <div class="spark-bar" style="height:80%;background:var(--accent);opacity:0.6"></div>
+            <div class="spark-bar" style="height:55%;background:var(--accent);opacity:0.5"></div>
+            <div class="spark-bar" style="height:90%;background:var(--accent);opacity:0.7"></div>
+            <div class="spark-bar" style="height:75%;background:var(--accent);opacity:0.6"></div>
+            <div class="spark-bar" style="height:100%;background:var(--accent)"></div>
+          </div>
+          <div class="kpi-accent" style="background:var(--accent)"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Transfers</div>
+          <div class="kpi-value" style="color:var(--purple)">84</div>
+          <div class="kpi-change up">↑ 5 this week</div>
+          <div class="sparkline">
+            <div class="spark-bar" style="height:50%;background:var(--purple);opacity:0.5"></div>
+            <div class="spark-bar" style="height:70%;background:var(--purple);opacity:0.6"></div>
+            <div class="spark-bar" style="height:40%;background:var(--purple);opacity:0.4"></div>
+            <div class="spark-bar" style="height:90%;background:var(--purple);opacity:0.7"></div>
+            <div class="spark-bar" style="height:60%;background:var(--purple);opacity:0.5"></div>
+            <div class="spark-bar" style="height:75%;background:var(--purple);opacity:0.6"></div>
+            <div class="spark-bar" style="height:100%;background:var(--purple)"></div>
+          </div>
+          <div class="kpi-accent" style="background:var(--purple)"></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Monthly Revenue</div>
+          <div class="kpi-value" style="color:var(--text)">₹2.4M</div>
+          <div class="kpi-change up">↑ 8.1% vs last month</div>
+          <div class="sparkline">
+            <div class="spark-bar" style="height:60%;background:var(--yellow);opacity:0.5"></div>
+            <div class="spark-bar" style="height:65%;background:var(--yellow);opacity:0.5"></div>
+            <div class="spark-bar" style="height:72%;background:var(--yellow);opacity:0.6"></div>
+            <div class="spark-bar" style="height:68%;background:var(--yellow);opacity:0.6"></div>
+            <div class="spark-bar" style="height:80%;background:var(--yellow);opacity:0.7"></div>
+            <div class="spark-bar" style="height:90%;background:var(--yellow);opacity:0.8"></div>
+            <div class="spark-bar" style="height:100%;background:var(--yellow)"></div>
+          </div>
+          <div class="kpi-accent" style="background:var(--yellow)"></div>
+        </div>
+        <div class="kpi-card" onclick="showPage('billing', document.querySelector('[onclick*=billing]'))">
+          <div class="kpi-label">Pending Bills</div>
+          <div class="kpi-value" style="color:var(--red)">312</div>
+          <div class="kpi-change down">↑ 18 overdue</div>
+          <div class="sparkline">
+            <div class="spark-bar" style="height:70%;background:var(--red);opacity:0.5"></div>
+            <div class="spark-bar" style="height:80%;background:var(--red);opacity:0.6"></div>
+            <div class="spark-bar" style="height:60%;background:var(--red);opacity:0.5"></div>
+            <div class="spark-bar" style="height:75%;background:var(--red);opacity:0.6"></div>
+            <div class="spark-bar" style="height:85%;background:var(--red);opacity:0.7"></div>
+            <div class="spark-bar" style="height:70%;background:var(--red);opacity:0.6"></div>
+            <div class="spark-bar" style="height:100%;background:var(--red)"></div>
+          </div>
+          <div class="kpi-accent" style="background:var(--red)"></div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Revenue Trend</div>
+              <div class="card-subtitle">Last 8 months</div>
+            </div>
+            <div style="display:flex;gap:12px;font-size:12px;color:var(--text3);">
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--accent);display:inline-block"></span>Revenue</span>
+              <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block"></span>Collected</span>
+            </div>
+          </div>
+          <div class="chart-bars" style="height:140px;">
+            <div class="chart-bar-group">
+              <div class="chart-bar" style="height:55%;background:linear-gradient(to top,var(--accent2),var(--accent));opacity:0.6"></div>
+              <div class="chart-bar" style="height:50%;background:var(--green);opacity:0.4"></div>
+              <div class="chart-bar-label">Aug</div>
+            </div>
+            <div class="chart-bar-group">
+              <div class="chart-bar" style="height:62%;background:linear-gradient(to top,var(--accent2),var(--accent));opacity:0.65"></div>
+              <div class="chart-bar" style="height:58%;background:var(--green);opacity:0.45"></div>
+              <div class="chart-bar-label">Sep</div>
+            </div>
+            <div class="chart-bar-group">
+              <div class="chart-bar" style="height:58%;background:linear-gradient(to top,var(--accent2),var(--accent));opacity:0.65"></div>
+              <div class="chart-bar" style="height:55%;background:var(--green);opacity:0.45"></div>
+              <div class="chart-bar-label">Oct</div>
+            </div>
+            <div class="chart-bar-group">
+              <div class="chart-bar" style="height:70%;background:linear-gradient(to top,var(--accent2),var(--accent));opacity:0.7"></div>
+              <div class="chart-bar" style="height:64%;background:var(--green);opacity:0.5"></div>
+              <div class="chart-bar-label">Nov</div>
+            </div>
+            <div class="chart-bar-group">
+              <div class="chart-bar" style="height:80%;background:linear-gradient(to top,var(--accent2),var(--accent));opacity:0.75"></div>
+              <div class="chart-bar" style="height:74%;background:var(--green);opacity:0.55"></div>
+              <div class="chart-bar-label">Dec</div>
+            </div>
+            <div class="chart-bar-group">
+              <div class="chart-bar" style="height:75%;background:linear-gradient(to top,var(--accent2),var(--accent));opacity:0.75"></div>
+              <div class="chart-bar" style="height:70%;background:var(--green);opacity:0.5"></div>
+              <div class="chart-bar-label">Jan</div>
+            </div>
+            <div class="chart-bar-group">
+              <div class="chart-bar" style="height:88%;background:linear-gradient(to top,var(--accent2),var(--accent));opacity:0.8"></div>
+              <div class="chart-bar" style="height:82%;background:var(--green);opacity:0.55"></div>
+              <div class="chart-bar-label">Feb</div>
+            </div>
+            <div class="chart-bar-group">
+              <div class="chart-bar" style="height:100%;background:linear-gradient(to top,var(--accent2),var(--accent))"></div>
+              <div class="chart-bar" style="height:92%;background:var(--green);opacity:0.6"></div>
+              <div class="chart-bar-label">Mar</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Service Distribution</div>
+              <div class="card-subtitle">By utility type</div>
+            </div>
+          </div>
+          <div class="donut-chart">
+            <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="38" fill="none" stroke="var(--surface3)" stroke-width="14"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#4f8ef7" stroke-width="14" stroke-dasharray="95 144" stroke-dashoffset="-95" transform="rotate(-90 50 50)"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#22c55e" stroke-width="14" stroke-dasharray="60 144" stroke-dashoffset="-190" transform="rotate(-90 50 50)"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#a855f7" stroke-width="14" stroke-dasharray="35 144" stroke-dashoffset="-250" transform="rotate(-90 50 50)"/>
+              <circle cx="50" cy="50" r="38" fill="none" stroke="#f59e0b" stroke-width="14" stroke-dasharray="49 144" stroke-dashoffset="-285" transform="rotate(-90 50 50)"/>
+              <text x="50" y="55" text-anchor="middle" fill="var(--text)" font-size="16" font-family="Syne" font-weight="700">100%</text>
+            </svg>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#4f8ef7"></div><div class="legend-label">Electricity</div><div class="legend-pct">40%</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div><div class="legend-label">Gas</div><div class="legend-pct">25%</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div><div class="legend-label">Water</div><div class="legend-pct">20%</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div><div class="legend-label">Telecom</div><div class="legend-pct">15%</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Recent Activity</div>
+          <button class="btn btn-secondary btn-sm">View All</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Customer</th><th>Service ID</th><th>Type</th><th>Action</th><th>Status</th><th>Date</th><th>Amount</th></tr></thead>
+            <tbody>
+              <tr onclick="showPage('customers', document.querySelector('[onclick*=customers]'))">
+                <td class="bold">Priya Sharma</td>
+                <td><span style="font-family:monospace;font-size:12px;color:var(--accent)">SVC-00184</span></td>
+                <td>⚡ Electricity</td><td>Service Activated</td>
+                <td><span class="badge active"><span class="badge-dot" style="background:var(--green)"></span>Active</span></td>
+                <td>Mar 19, 2025</td><td class="bill-mono">₹1,200</td>
+              </tr>
+              <tr>
+                <td class="bold">Arun Mehta</td>
+                <td><span style="font-family:monospace;font-size:12px;color:var(--purple)">SVC-00183</span></td>
+                <td>🔥 Gas</td><td>Transfer Requested</td>
+                <td><span class="badge pending"><span class="badge-dot" style="background:var(--yellow)"></span>Pending</span></td>
+                <td>Mar 19, 2025</td><td class="bill-mono">₹850</td>
+              </tr>
+              <tr>
+                <td class="bold">Sonal Verma</td>
+                <td><span style="font-family:monospace;font-size:12px;color:var(--green)">SVC-00182</span></td>
+                <td>💧 Water</td><td>Bill Generated</td>
+                <td><span class="badge paid"><span class="badge-dot" style="background:var(--green)"></span>Paid</span></td>
+                <td>Mar 18, 2025</td><td class="bill-mono">₹420</td>
+              </tr>
+              <tr>
+                <td class="bold">Dev Kapoor</td>
+                <td><span style="font-family:monospace;font-size:12px;color:var(--red)">SVC-00181</span></td>
+                <td>⚡ Electricity</td><td>Service Suspended</td>
+                <td><span class="badge suspended"><span class="badge-dot" style="background:var(--yellow)"></span>Suspended</span></td>
+                <td>Mar 17, 2025</td><td class="bill-mono">₹2,100</td>
+              </tr>
+              <tr>
+                <td class="bold">Neha Joshi</td>
+                <td><span style="font-family:monospace;font-size:12px;color:var(--text3)">SVC-00180</span></td>
+                <td>📡 Telecom</td><td>Service Closed</td>
+                <td><span class="badge closed"><span class="badge-dot" style="background:var(--red)"></span>Closed</span></td>
+                <td>Mar 16, 2025</td><td class="bill-mono">₹680</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CUSTOMERS PAGE ===== -->
+    <div class="page" id="page-customers">
+      <div class="page-header">
+        <div><div class="page-title">Customers</div><div class="page-subtitle">Manage customer accounts and KYC</div></div>
+        <button class="btn btn-primary">+ Add Customer</button>
+      </div>
+      <div class="filters-row">
+        <input class="search-input" placeholder="🔍  Search by name, phone, account ID...">
+        <select class="filter-select"><option>All Status</option><option>Active</option><option>Inactive</option></select>
+        <select class="filter-select"><option>All Regions</option><option>North</option><option>South</option><option>West</option></select>
+      </div>
+      <div class="two-col" style="grid-template-columns:300px 1fr;">
+        <div class="profile-card">
+          <div class="profile-avatar-lg">PS</div>
+          <div class="profile-name">Priya Sharma</div>
+          <div class="profile-id">CUST-10042 · Since Jan 2022</div>
+          <div class="divider"></div>
+          <div class="profile-field"><div class="profile-field-label">Phone</div><div class="profile-field-value">+91 98765 43210</div></div>
+          <div class="profile-field"><div class="profile-field-label">Email</div><div class="profile-field-value">priya.sharma@email.com</div></div>
+          <div class="profile-field"><div class="profile-field-label">KYC Status</div><div class="profile-field-value"><span class="badge active">✓ Verified</span></div></div>
+          <div class="profile-field"><div class="profile-field-label">Address</div><div class="profile-field-value">A-14, Sector 22, Noida, UP - 201301</div></div>
+          <div class="divider"></div>
+          <div class="stat-row">
+            <div class="mini-stat"><div class="mini-stat-val" style="color:var(--green)">3</div><div class="mini-stat-label">Services</div></div>
+            <div class="mini-stat"><div class="mini-stat-val" style="color:var(--accent)">₹4.2k</div><div class="mini-stat-label">Monthly</div></div>
+            <div class="mini-stat"><div class="mini-stat-val" style="color:var(--yellow)">1</div><div class="mini-stat-label">Pending</div></div>
+          </div>
+          <div class="divider"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm">📞 Call</button>
+            <button class="btn btn-secondary btn-sm">✉️ Email</button>
+            <button class="btn btn-primary btn-sm" onclick="showPage('services', document.querySelector('[onclick*=services]'))">View Services</button>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><div class="card-title">Active Services</div><button class="btn btn-primary btn-sm" onclick="showPage('start-service', document.querySelector('[onclick*=start-service]'))">+ Add Service</button></div>
+            <table>
+              <thead><tr><th>Service ID</th><th>Type</th><th>Plan</th><th>Location</th><th>Status</th><th>Monthly</th><th></th></tr></thead>
+              <tbody>
+                <tr onclick="showPage('services', document.querySelector('[onclick*=services]'))">
+                  <td><span style="font-family:monospace;font-size:12px;color:var(--accent)">SVC-00184</span></td>
+                  <td>⚡ Electricity</td><td>Residential Plus</td>
+                  <td>A-14, Sector 22</td>
+                  <td><span class="badge active">Active</span></td>
+                  <td class="bill-mono">₹1,200</td>
+                  <td><button class="btn btn-secondary btn-sm">View</button></td>
+                </tr>
+                <tr>
+                  <td><span style="font-family:monospace;font-size:12px;color:var(--green)">SVC-00142</span></td>
+                  <td>💧 Water</td><td>Basic</td>
+                  <td>A-14, Sector 22</td>
+                  <td><span class="badge active">Active</span></td>
+                  <td class="bill-mono">₹380</td>
+                  <td><button class="btn btn-secondary btn-sm">View</button></td>
+                </tr>
+                <tr>
+                  <td><span style="font-family:monospace;font-size:12px;color:var(--text3)">SVC-00098</span></td>
+                  <td>📡 Telecom</td><td>Fiber 200Mbps</td>
+                  <td>A-14, Sector 22</td>
+                  <td><span class="badge suspended">Suspended</span></td>
+                  <td class="bill-mono">₹899</td>
+                  <td><button class="btn btn-secondary btn-sm">View</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Billing Summary</div></div>
+            <div class="info-grid">
+              <div class="info-box"><div class="info-box-label">Outstanding Balance</div><div class="info-box-value" style="color:var(--red);font-size:18px;font-family:Syne,sans-serif;">₹1,240</div></div>
+              <div class="info-box"><div class="info-box-label">Last Payment</div><div class="info-box-value">₹2,480 on Mar 10</div></div>
+              <div class="info-box"><div class="info-box-label">Next Bill Date</div><div class="info-box-value">Apr 1, 2025</div></div>
+              <div class="info-box"><div class="info-box-label">Payment Method</div><div class="info-box-value">UPI · priya@paytm</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SERVICES PAGE ===== -->
+    <div class="page" id="page-services">
+      <div class="page-header">
+        <div><div class="page-title">Service Details</div><div class="page-subtitle">SVC-00184 · Electricity · Priya Sharma</div></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary">📄 View Invoice</button>
+          <button class="btn btn-danger btn-sm" onclick="openModal('stopModal')">⛔ Stop Service</button>
+        </div>
+      </div>
+
+      <div class="service-banner active">
+        <div>
+          <div class="service-banner-label">Service Status</div>
+          <div class="service-banner-status" style="color:var(--green)">● Active</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px;">Since Feb 14, 2025 · 33 days active</div>
+        </div>
+        <div class="service-banner-actions">
+          <button class="btn btn-secondary" onclick="showPage('transfer-service', document.querySelector('[onclick*=transfer-service]'))">🔄 Transfer Service</button>
+          <button class="btn btn-success">✓ Active — No Action Needed</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Service Info</div>
+          <div class="profile-field"><div class="profile-field-label">Service ID</div><div class="profile-field-value" style="font-family:monospace;color:var(--accent)">SVC-00184</div></div>
+          <div class="profile-field"><div class="profile-field-label">Utility Type</div><div class="profile-field-value">⚡ Electricity</div></div>
+          <div class="profile-field"><div class="profile-field-label">Plan</div><div class="profile-field-value">Residential Plus</div></div>
+          <div class="profile-field"><div class="profile-field-label">Meter Number</div><div class="profile-field-value" style="font-family:monospace">MTR-482-7291</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Location</div>
+          <div class="profile-field"><div class="profile-field-label">Address</div><div class="profile-field-value">A-14, Sector 22, Noida, UP 201301</div></div>
+          <div class="profile-field"><div class="profile-field-label">Area</div><div class="profile-field-value">Noida Division · Zone 3</div></div>
+          <div class="profile-field"><div class="profile-field-label">Connection Type</div><div class="profile-field-value">Single Phase · 5KW Sanctioned</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="margin-bottom:14px;">Billing</div>
+          <div class="profile-field"><div class="profile-field-label">Monthly Fixed</div><div class="profile-field-value">₹350</div></div>
+          <div class="profile-field"><div class="profile-field-label">Usage Rate</div><div class="profile-field-value">₹6.50 / unit</div></div>
+          <div class="profile-field"><div class="profile-field-label">Current Bill</div><div class="profile-field-value" style="color:var(--yellow);font-weight:600;">₹1,200 (due Apr 1)</div></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header"><div class="card-title">Meter & Usage Data</div><span style="font-size:12px;color:var(--text3);">Reading: Mar 1 – Mar 19, 2025</span></div>
+        <div class="meter-grid">
+          <div class="meter-card"><div class="meter-icon">⚡</div><div class="meter-val">132.4 kWh</div><div class="meter-label">This month</div></div>
+          <div class="meter-card"><div class="meter-icon">📈</div><div class="meter-val">120.1 kWh</div><div class="meter-label">Last month</div></div>
+          <div class="meter-card"><div class="meter-icon">💡</div><div class="meter-val">6.97 kWh</div><div class="meter-label">Avg daily</div></div>
+          <div class="meter-card"><div class="meter-icon">💰</div><div class="meter-val">₹860</div><div class="meter-label">Usage cost</div></div>
+        </div>
+        <div class="usage-bar-wrap"><div class="usage-bar-header"><span>Consumption vs. Plan Limit (300 kWh)</span><span style="color:var(--accent)">44%</span></div><div class="usage-bar-track"><div class="usage-bar-fill" style="width:44%;background:linear-gradient(to right,var(--accent),var(--green))"></div></div></div>
+        <div class="usage-bar-wrap" style="margin-top:10px;"><div class="usage-bar-header"><span>Days elapsed this billing cycle (19/31)</span><span style="color:var(--yellow)">61%</span></div><div class="usage-bar-track"><div class="usage-bar-fill" style="width:61%;background:var(--yellow)"></div></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Service Timeline</div></div>
+        <div class="timeline">
+          <div class="tl-item" style="position:relative;">
+            <div class="tl-line"></div>
+            <div class="tl-dot green"></div>
+            <div class="tl-content"><div class="tl-title">Service Activated</div><div class="tl-time">Feb 14, 2025 · 10:32 AM</div></div>
+          </div>
+          <div class="tl-item" style="position:relative;">
+            <div class="tl-line"></div>
+            <div class="tl-dot blue"></div>
+            <div class="tl-content"><div class="tl-title">Installation Scheduled</div><div class="tl-time">Feb 12, 2025 · 02:15 PM</div></div>
+          </div>
+          <div class="tl-item" style="position:relative;">
+            <div class="tl-line"></div>
+            <div class="tl-dot blue"></div>
+            <div class="tl-content"><div class="tl-title">Request Approved</div><div class="tl-time">Feb 10, 2025 · 11:00 AM</div></div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot yellow"></div>
+            <div class="tl-content"><div class="tl-title">Start Service Requested</div><div class="tl-time">Feb 8, 2025 · 03:45 PM</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== REQUESTS PAGE ===== -->
+    <div class="page" id="page-requests">
+      <div class="page-header">
+        <div><div class="page-title">Service Requests</div><div class="page-subtitle">Manage and approve all service lifecycle requests</div></div>
+        <button class="btn btn-primary" onclick="showPage('start-service', document.querySelector('[onclick*=start-service]'))">+ New Request</button>
+      </div>
+      <div class="tabs">
+        <div class="tab active" onclick="setTab(this)">All (247)</div>
+        <div class="tab" onclick="setTab(this)">Start (142)</div>
+        <div class="tab" onclick="setTab(this)">Transfer (67)</div>
+        <div class="tab" onclick="setTab(this)">Stop (38)</div>
+      </div>
+      <div class="filters-row">
+        <input class="search-input" placeholder="🔍  Search requests...">
+        <select class="filter-select"><option>All Status</option><option>Pending</option><option>Approved</option><option>Completed</option><option>Rejected</option></select>
+        <select class="filter-select"><option>All Types</option><option>Electricity</option><option>Gas</option><option>Water</option><option>Telecom</option></select>
+        <select class="filter-select"><option>Last 30 days</option><option>Last 7 days</option><option>Last 90 days</option></select>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Request ID</th><th>Customer</th><th>Type</th><th>Request</th><th>Status</th><th>Submitted</th><th>Assigned To</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span style="font-family:monospace;font-size:12px;color:var(--accent)">REQ-4821</span></td>
+                <td class="bold">Kiran Rao</td><td>⚡ Electricity</td><td>Start Service</td>
+                <td><span class="badge pending">Pending</span></td>
+                <td>Mar 20, 2025</td><td style="color:var(--text3)">Unassigned</td>
+                <td><button class="btn btn-primary btn-sm" onclick="openModal('approveModal')">Review</button></td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:12px;color:var(--purple)">REQ-4820</span></td>
+                <td class="bold">Arun Mehta</td><td>🔥 Gas</td><td>Transfer</td>
+                <td><span class="badge scheduled">Scheduled</span></td>
+                <td>Mar 19, 2025</td><td>Deepak T.</td>
+                <td><button class="btn btn-secondary btn-sm">View</button></td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:12px;color:var(--green)">REQ-4819</span></td>
+                <td class="bold">Meena Patel</td><td>💧 Water</td><td>Start Service</td>
+                <td><span class="badge active">Approved</span></td>
+                <td>Mar 18, 2025</td><td>Prachi S.</td>
+                <td><button class="btn btn-secondary btn-sm">View</button></td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:12px;color:var(--red)">REQ-4818</span></td>
+                <td class="bold">Dev Kapoor</td><td>⚡ Electricity</td><td>Stop Service</td>
+                <td><span class="badge active">Completed</span></td>
+                <td>Mar 17, 2025</td><td>Rohit M.</td>
+                <td><button class="btn btn-secondary btn-sm">View</button></td>
+              </tr>
+              <tr>
+                <td><span style="font-family:monospace;font-size:12px;color:var(--yellow)">REQ-4817</span></td>
+                <td class="bold">Sarita Gupta</td><td>📡 Telecom</td><td>Transfer</td>
+                <td><span class="badge pending">Pending</span></td>
+                <td>Mar 17, 2025</td><td style="color:var(--text3)">Unassigned</td>
+                <td><button class="btn btn-primary btn-sm" onclick="openModal('approveModal')">Review</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BILLING PAGE ===== -->
+    <div class="page" id="page-billing">
+      <div class="page-header">
+        <div><div class="page-title">Billing & Invoices</div><div class="page-subtitle">Track payments, invoices, and disputes</div></div>
+        <button class="btn btn-primary">📤 Export Invoices</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px;">
+        <div class="kpi-card"><div class="kpi-label">Total Billed</div><div class="kpi-value" style="font-size:22px;">₹24.8L</div><div class="kpi-change up">March 2025</div></div>
+        <div class="kpi-card"><div class="kpi-label">Collected</div><div class="kpi-value" style="font-size:22px;color:var(--green)">₹22.1L</div><div class="kpi-change up">↑ 89% collection rate</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pending</div><div class="kpi-value" style="font-size:22px;color:var(--yellow)">₹1.9L</div><div class="kpi-change">312 invoices</div></div>
+        <div class="kpi-card"><div class="kpi-label">Overdue</div><div class="kpi-value" style="font-size:22px;color:var(--red)">₹0.8L</div><div class="kpi-change down">18 accounts</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Invoice Register</div>
+          <div style="display:flex;gap:8px;">
+            <select class="filter-select" style="font-size:12px;padding:6px 10px;"><option>All Status</option><option>Paid</option><option>Pending</option><option>Overdue</option></select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Invoice ID</th><th>Customer</th><th>Service</th><th>Period</th><th>Fixed</th><th>Usage</th><th>Pro-rata</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr onclick="openModal('invoiceModal')">
+                <td><span style="font-family:monospace;font-size:12px;color:var(--accent)">INV-9912</span></td>
+                <td class="bold">Priya Sharma</td><td>⚡ SVC-00184</td><td>Feb 14–Mar 14</td>
+                <td class="bill-mono">₹350</td><td class="bill-mono">₹860</td><td class="bill-mono">₹155</td>
+                <td class="bill-mono bold">₹1,365</td>
+                <td><span class="badge pending">Pending</span></td>
+              </tr>
+              <tr onclick="openModal('invoiceModal')">
+                <td><span style="font-family:monospace;font-size:12px;color:var(--green)">INV-9911</span></td>
+                <td class="bold">Sonal Verma</td><td>💧 SVC-00142</td><td>Mar 1–31</td>
+                <td class="bill-mono">₹180</td><td class="bill-mono">₹240</td><td class="bill-mono">—</td>
+                <td class="bill-mono bold">₹420</td>
+                <td><span class="badge paid">Paid</span></td>
+              </tr>
+              <tr onclick="openModal('invoiceModal')">
+                <td><span style="font-family:monospace;font-size:12px;color:var(--red)">INV-9910</span></td>
+                <td class="bold">Dev Kapoor</td><td>⚡ SVC-00181</td><td>Feb 1–28</td>
+                <td class="bill-mono">₹350</td><td class="bill-mono">₹1,540</td><td class="bill-mono">₹210</td>
+                <td class="bill-mono bold">₹2,100</td>
+                <td><span class="badge overdue">Overdue</span></td>
+              </tr>
+              <tr onclick="openModal('invoiceModal')">
+                <td><span style="font-family:monospace;font-size:12px;color:var(--green)">INV-9909</span></td>
+                <td class="bold">Arun Mehta</td><td>🔥 SVC-00183</td><td>Mar 1–31</td>
+                <td class="bill-mono">₹200</td><td class="bill-mono">₹420</td><td class="bill-mono">₹230</td>
+                <td class="bill-mono bold">₹850</td>
+                <td><span class="badge paid">Paid</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== REPORTS PAGE ===== -->
+    <div class="page" id="page-reports">
+      <div class="page-header">
+        <div><div class="page-title">Reports</div><div class="page-subtitle">Analytics and performance insights</div></div>
+        <button class="btn btn-primary">📊 Generate Report</button>
+      </div>
+      <div class="info-grid" style="margin-bottom:20px;">
+        <div class="card"><div class="card-title" style="margin-bottom:12px;">Churn Risk</div><div style="font-size:32px;font-family:Syne,sans-serif;font-weight:800;color:var(--yellow);">4.2%</div><div style="font-size:12px;color:var(--text2);margin-top:6px;">124 accounts at risk of cancellation</div></div>
+        <div class="card"><div class="card-title" style="margin-bottom:12px;">Avg Activation Time</div><div style="font-size:32px;font-family:Syne,sans-serif;font-weight:800;color:var(--accent);">2.3 days</div><div style="font-size:12px;color:var(--text2);margin-top:6px;">Down from 3.1 days last quarter</div></div>
+        <div class="card"><div class="card-title" style="margin-bottom:12px;">Collection Rate</div><div style="font-size:32px;font-family:Syne,sans-serif;font-weight:800;color:var(--green);">89%</div><div style="font-size:12px;color:var(--text2);margin-top:6px;">Up 3% from last month</div></div>
+        <div class="card"><div class="card-title" style="margin-bottom:12px;">Disputes Filed</div><div style="font-size:32px;font-family:Syne,sans-serif;font-weight:800;color:var(--red);">18</div><div style="font-size:12px;color:var(--text2);margin-top:6px;">This month · 12 resolved</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Service Lifecycle State Distribution</div></div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div class="state-flow">
+            <div class="state-node start">Requested <span style="font-family:monospace;font-size:10px;margin-left:6px;opacity:0.7">247</span></div>
+            <div class="state-arrow">→</div>
+            <div class="state-node mid">Scheduled <span style="font-family:monospace;font-size:10px;margin-left:6px;opacity:0.7">84</span></div>
+            <div class="state-arrow">→</div>
+            <div class="state-node active">Active <span style="font-family:monospace;font-size:10px;margin-left:6px;opacity:0.7">12,847</span></div>
+            <div class="state-arrow">→</div>
+            <div class="state-node mid">Suspended <span style="font-family:monospace;font-size:10px;margin-left:6px;opacity:0.7">312</span></div>
+            <div class="state-arrow">→</div>
+            <div class="state-node purple">Transferred <span style="font-family:monospace;font-size:10px;margin-left:6px;opacity:0.7">84</span></div>
+            <div class="state-arrow">→</div>
+            <div class="state-node end">Closed <span style="font-family:monospace;font-size:10px;margin-left:6px;opacity:0.7">3,241</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== START SERVICE FLOW ===== -->
+    <div class="page" id="page-start-service">
+      <div class="page-header">
+        <div><div class="page-title">Start New Service</div><div class="page-subtitle">Complete all steps to activate a new utility connection</div></div>
+        <button class="btn btn-secondary" onclick="showPage('dashboard', document.querySelector('[onclick*=dashboard]'))">✕ Cancel</button>
+      </div>
+      <div class="stepper">
+        <div class="step-item">
+          <div class="step-circle done" id="sc1">✓</div>
+          <div class="step-label active" id="sl1">Customer Info</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-circle active" id="sc2">2</div>
+          <div class="step-label active" id="sl2">Address</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-circle" id="sc3">3</div>
+          <div class="step-label" id="sl3">Plan Selection</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-circle" id="sc4">4</div>
+          <div class="step-label" id="sl4">Schedule Date</div>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item">
+          <div class="step-circle" id="sc5">5</div>
+          <div class="step-label" id="sl5">Review & Confirm</div>
+        </div>
+      </div>
+
+      <div id="step-content">
+        <div class="card step-content" id="step-2-content">
+          <div class="card-header"><div><div class="card-title">Service Address</div><div class="card-subtitle">Enter and validate the installation address</div></div></div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Flat / House Number *</label><input class="form-input" placeholder="e.g. A-14, Flat 302"></div>
+            <div class="form-group"><label class="form-label">Building / Society</label><input class="form-input" placeholder="e.g. Green Valley Apartments"></div>
+            <div class="form-group"><label class="form-label">Street / Locality *</label><input class="form-input" placeholder="e.g. Sector 22, Noida"></div>
+            <div class="form-group"><label class="form-label">City *</label><input class="form-input" placeholder="e.g. Noida"></div>
+            <div class="form-group"><label class="form-label">State *</label>
+              <select class="form-select"><option>Uttar Pradesh</option><option>Delhi</option><option>Maharashtra</option><option>Karnataka</option></select>
+            </div>
+            <div class="form-group"><label class="form-label">PIN Code *</label><input class="form-input" placeholder="e.g. 201301" maxlength="6"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Utility Type *</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--blue-dim);border:2px solid var(--accent);border-radius:8px;cursor:pointer;font-size:13px;">⚡ Electricity <input type="radio" name="util" checked style="margin-left:4px;"></label>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface2);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;">🔥 Gas <input type="radio" name="util" style="margin-left:4px;"></label>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface2);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;">💧 Water <input type="radio" name="util" style="margin-left:4px;"></label>
+              <label style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface2);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;">📡 Telecom <input type="radio" name="util" style="margin-left:4px;"></label>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button class="btn btn-secondary">← Back</button>
+            <button class="btn btn-primary">Validate Address →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TRANSFER SERVICE FLOW ===== -->
+    <div class="page" id="page-transfer-service">
+      <div class="page-header">
+        <div><div class="page-title">Transfer Service</div><div class="page-subtitle">Move service to a new address or change ownership</div></div>
+        <button class="btn btn-secondary" onclick="showPage('services', document.querySelector('[onclick*=services]'))">✕ Cancel</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Transfer Details</div></div>
+          <div class="form-group"><label class="form-label">Service ID *</label><input class="form-input" value="SVC-00184" placeholder="Enter Service ID"></div>
+          <div class="form-group"><label class="form-label">Transfer Type</label>
+            <div style="display:flex;gap:10px;">
+              <label style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--blue-dim);border:2px solid var(--accent);border-radius:8px;cursor:pointer;font-size:13px;">Address Change <input type="radio" name="ttype" checked style="margin-left:4px;"></label>
+              <label style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--surface2);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;">Ownership Change <input type="radio" name="ttype" style="margin-left:4px;"></label>
+            </div>
+          </div>
+          <div class="address-split">
+            <div>
+              <div style="font-size:12px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px;">Old Address</div>
+              <div class="form-group"><label class="form-label">Current Address</label><input class="form-input" value="A-14, Sector 22, Noida, 201301"></div>
+            </div>
+            <div class="arrow-divider">→</div>
+            <div>
+              <div style="font-size:12px;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px;">New Address</div>
+              <div class="form-group"><label class="form-label">New Address *</label><input class="form-input" placeholder="Enter new address"></div>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Transfer Date *</label><input class="form-input" type="date" value="2025-03-25"></div>
+          <div class="form-group"><label class="form-label">Reason for Transfer</label><textarea class="form-textarea" rows="2" placeholder="Optional: reason for transfer"></textarea></div>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button class="btn btn-secondary" style="flex:1;">Calculate Pro-rata</button>
+            <button class="btn btn-primary" style="flex:1;">Confirm Transfer →</button>
+          </div>
+        </div>
+        <div>
+          <div class="prorata-box" style="margin-bottom:16px;">
+            <div class="prorata-title">📐 PRO-RATA BILLING PREVIEW</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:12px;">Transfer date: Mar 25, 2025 · Cycle: Mar 1 – Mar 31</div>
+            <div class="bill-row"><span class="label">Days at old address (1–25)</span><span class="bill-mono">25 days</span></div>
+            <div class="bill-row"><span class="label">Daily rate (₹1,365 / 31)</span><span class="bill-mono">₹44.03/day</span></div>
+            <div class="bill-row"><span class="label">Old address bill</span><span class="bill-mono" style="color:var(--text);">₹1,101</span></div>
+            <div class="bill-row"><span class="label">New address bill (6 days)</span><span class="bill-mono" style="color:var(--text);">₹264</span></div>
+            <div class="bill-row total"><span class="label">Total cycle bill</span><span class="bill-mono" style="color:var(--accent);">₹1,365</span></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:14px;">Transfer Checklist</div>
+            <div style="font-size:13px;display:flex;flex-direction:column;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green)">✓</span> Service ID verified</div>
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--green)">✓</span> Customer KYC verified</div>
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow)">○</span> New address validated</div>
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--yellow)">○</span> Pro-rata calculation confirmed</div>
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--text3)">○</span> Transfer order created</div>
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--text3)">○</span> Notifications sent</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DATA MODEL PAGE ===== -->
+    <div class="page" id="page-data-model">
+      <div class="page-header">
+        <div><div class="page-title">Data Model</div><div class="page-subtitle">Entity relationships and schema overview</div></div>
+      </div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title" style="margin-bottom:16px;">Service Lifecycle State Machine</div>
+        <div class="state-flow" style="flex-wrap:wrap;gap:6px;">
+          <div class="state-node start">Requested</div>
+          <div class="state-arrow">→</div>
+          <div class="state-node mid">Scheduled</div>
+          <div class="state-arrow">→</div>
+          <div class="state-node active">Active</div>
+          <div class="state-arrow">⇌</div>
+          <div class="state-node mid">Suspended</div>
+          <div style="width:100%;height:1px;background:var(--border);margin:10px 0;"></div>
+          <div class="state-node active">Active</div>
+          <div class="state-arrow">→</div>
+          <div class="state-node purple">Transferred</div>
+          <div class="state-arrow">+</div>
+          <div class="state-node start">New (Scheduled)</div>
+          <div style="width:100%;height:1px;background:var(--border);margin:10px 0;"></div>
+          <div class="state-node active">Active / Suspended</div>
+          <div class="state-arrow">→</div>
+          <div class="state-node end">Closed</div>
+        </div>
+      </div>
+      <div class="entity-grid">
+        <div class="entity-card">
+          <div class="entity-name"><span class="entity-icon">👤</span> Customer</div>
+          <div class="field-item">customer_id <span class="field-type">UUID · PK</span></div>
+          <div class="field-item">full_name <span class="field-type">VARCHAR</span></div>
+          <div class="field-item">phone, email <span class="field-type">VARCHAR</span></div>
+          <div class="field-item">kyc_status <span class="field-type">ENUM</span></div>
+          <div class="field-item">created_at <span class="field-type">TIMESTAMP</span></div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text3);">→ has many: ServiceAccounts, BillingAccounts</div>
+        </div>
+        <div class="entity-card">
+          <div class="entity-name"><span class="entity-icon">⚙️</span> Service Account</div>
+          <div class="field-item">service_id <span class="field-type">UUID · PK</span></div>
+          <div class="field-item">customer_id <span class="field-type">UUID · FK</span></div>
+          <div class="field-item">location_id <span class="field-type">UUID · FK</span></div>
+          <div class="field-item">utility_type <span class="field-type">ENUM</span></div>
+          <div class="field-item">status <span class="field-type">ENUM (6 states)</span></div>
+          <div class="field-item">plan_id <span class="field-type">UUID · FK</span></div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text3);">→ has many: Invoices, Meters, Requests</div>
+        </div>
+        <div class="entity-card">
+          <div class="entity-name"><span class="entity-icon">📍</span> Service Location</div>
+          <div class="field-item">location_id <span class="field-type">UUID · PK</span></div>
+          <div class="field-item">address_line1 <span class="field-type">VARCHAR</span></div>
+          <div class="field-item">city, state, pin <span class="field-type">VARCHAR</span></div>
+          <div class="field-item">zone, division <span class="field-type">VARCHAR</span></div>
+          <div class="field-item">gps_coords <span class="field-type">POINT</span></div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text3);">→ belongs to: ServiceAccount</div>
+        </div>
+        <div class="entity-card">
+          <div class="entity-name"><span class="entity-icon">📋</span> Service Request</div>
+          <div class="field-item">request_id <span class="field-type">UUID · PK</span></div>
+          <div class="field-item">service_id <span class="field-type">UUID · FK</span></div>
+          <div class="field-item">request_type <span class="field-type">ENUM: start|transfer|stop</span></div>
+          <div class="field-item">status <span class="field-type">ENUM: pending|approved|done</span></div>
+          <div class="field-item">scheduled_date <span class="field-type">DATE</span></div>
+          <div class="field-item">assigned_agent <span class="field-type">UUID · FK</span></div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text3);">→ triggers: state transitions, billing events</div>
+        </div>
+        <div class="entity-card">
+          <div class="entity-name"><span class="entity-icon">💳</span> Invoice</div>
+          <div class="field-item">invoice_id <span class="field-type">UUID · PK</span></div>
+          <div class="field-item">service_id <span class="field-type">UUID · FK</span></div>
+          <div class="field-item">billing_period <span class="field-type">DATERANGE</span></div>
+          <div class="field-item">fixed_charge <span class="field-type">DECIMAL</span></div>
+          <div class="field-item">usage_charge <span class="field-type">DECIMAL</span></div>
+          <div class="field-item">prorata_adj <span class="field-type">DECIMAL</span></div>
+          <div class="field-item">status <span class="field-type">ENUM: pending|paid|overdue</span></div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text3);">Formula: Daily Rate × Active Days + Usage</div>
+        </div>
+        <div class="entity-card">
+          <div class="entity-name"><span class="entity-icon">📡</span> Meter / Usage</div>
+          <div class="field-item">meter_id <span class="field-type">UUID · PK</span></div>
+          <div class="field-item">service_id <span class="field-type">UUID · FK</span></div>
+          <div class="field-item">meter_number <span class="field-type">VARCHAR · UNIQUE</span></div>
+          <div class="field-item">reading_date <span class="field-type">DATE</span></div>
+          <div class="field-item">units_consumed <span class="field-type">DECIMAL</span></div>
+          <div class="field-item">reading_source <span class="field-type">ENUM: manual|smart|estimated</span></div>
+          <div style="margin-top:10px;font-size:11px;color:var(--text3);">→ null reading → estimated billing fallback</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- NOTIFICATION DRAWER -->
+<div class="drawer" id="notifDrawer">
+  <div class="drawer-header">
+    <div class="drawer-title">Notifications</div>
+    <button class="close-btn" onclick="toggleDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="notif-item unread"><div class="notif-title">New Start Service Request</div><div class="notif-body">Kiran Rao submitted a new electricity connection request (REQ-4821)</div><div class="notif-time">2 min ago</div></div>
+    <div class="notif-item warn"><div class="notif-title">Transfer Pending Review</div><div class="notif-body">Sarita Gupta's telecom transfer has been unassigned for 8+ hours</div><div class="notif-time">8 hr ago</div></div>
+    <div class="notif-item danger"><div class="notif-title">Overdue Invoice</div><div class="notif-body">INV-9910 for Dev Kapoor is 12 days overdue · ₹2,100 outstanding</div><div class="notif-time">1 day ago</div></div>
+    <div class="notif-item"><div class="notif-title">Meter Data Missing</div><div class="notif-body">3 meters in Zone 5 did not report readings for March billing cycle</div><div class="notif-time">2 days ago</div></div>
+    <div class="notif-item"><div class="notif-title">Service Activated</div><div class="notif-body">SVC-00184 for Priya Sharma is now active. Auto-bill scheduled for Apr 1</div><div class="notif-time">3 days ago</div></div>
+  </div>
+</div>
+
+<!-- MODAL: STOP SERVICE -->
+<div class="modal-overlay" id="stopModal" onclick="closeModal('stopModal', event)">
+  <div class="modal">
+    <div class="modal-title">⛔ Stop Service</div>
+    <div class="modal-sub">You are about to disconnect SVC-00184 · Priya Sharma · Electricity</div>
+    <div class="form-group"><label class="form-label">Stop Date *</label><input class="form-input" type="date" value="2025-03-31"></div>
+    <div class="form-group"><label class="form-label">Reason</label>
+      <select class="form-select"><option>Customer Request</option><option>Non-payment</option><option>Property Vacated</option><option>Violation</option></select>
+    </div>
+    <div style="background:var(--red-dim);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--red);font-weight:600;margin-bottom:8px;">⚠ FINAL BILL PREVIEW</div>
+      <div class="bill-row"><span class="label">Fixed charge (19 days)</span><span class="bill-mono">₹215</span></div>
+      <div class="bill-row"><span class="label">Usage charges (132.4 kWh)</span><span class="bill-mono">₹860</span></div>
+      <div class="bill-row"><span class="label">Security deposit refund</span><span class="bill-mono" style="color:var(--green)">-₹500</span></div>
+      <div class="bill-row total"><span class="label">Final Bill</span><span class="bill-mono" style="color:var(--red);">₹575</span></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('stopModal')">Cancel</button>
+      <button class="btn btn-danger">Confirm Stop Service</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: APPROVE REQUEST -->
+<div class="modal-overlay" id="approveModal" onclick="closeModal('approveModal', event)">
+  <div class="modal">
+    <div class="modal-title">📋 Review Request</div>
+    <div class="modal-sub">REQ-4821 · Start Service · Kiran Rao</div>
+    <div class="confirm-section">
+      <div class="confirm-row"><span class="confirm-key">Customer</span><span class="confirm-val">Kiran Rao (CUST-10087)</span></div>
+      <div class="confirm-row"><span class="confirm-key">Utility Type</span><span class="confirm-val">⚡ Electricity</span></div>
+      <div class="confirm-row"><span class="confirm-key">Address</span><span class="confirm-val">B-22, Rohini, Delhi 110085</span></div>
+      <div class="confirm-row"><span class="confirm-key">Plan</span><span class="confirm-val">Residential Standard</span></div>
+      <div class="confirm-row"><span class="confirm-key">Requested Date</span><span class="confirm-val">Mar 22, 2025</span></div>
+      <div class="confirm-row"><span class="confirm-key">KYC Status</span><span class="confirm-val" style="color:var(--green)">✓ Verified</span></div>
+    </div>
+    <div class="form-group"><label class="form-label">Assign To</label>
+      <select class="form-select"><option>Unassigned</option><option>Deepak T.</option><option>Prachi S.</option><option>Rohit M.</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" rows="2" placeholder="Optional notes..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="closeModal('approveModal')">Reject</button>
+      <button class="btn btn-secondary" onclick="closeModal('approveModal')">Close</button>
+      <button class="btn btn-success" onclick="closeModal('approveModal')">✓ Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: INVOICE DETAIL -->
+<div class="modal-overlay" id="invoiceModal" onclick="closeModal('invoiceModal', event)">
+  <div class="modal">
+    <div class="modal-title">🧾 Invoice Detail</div>
+    <div class="modal-sub">INV-9912 · SVC-00184 · Priya Sharma</div>
+    <div class="confirm-section">
+      <div class="confirm-row"><span class="confirm-key">Billing Period</span><span class="confirm-val">Feb 14 – Mar 14, 2025</span></div>
+      <div class="confirm-row"><span class="confirm-key">Active Days</span><span class="confirm-val">28 of 28 days</span></div>
+      <div class="confirm-row"><span class="confirm-key">Monthly Rate</span><span class="confirm-val">₹1,365</span></div>
+    </div>
+    <div style="margin:14px 0 4px;font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;">Billing Breakdown</div>
+    <div class="bill-row"><span class="label">Fixed monthly charge</span><span class="bill-mono">₹350.00</span></div>
+    <div class="bill-row"><span class="label">Usage: 132.4 kWh × ₹6.50</span><span class="bill-mono">₹860.60</span></div>
+    <div class="bill-row"><span class="label">Pro-rata adjustment (mid-cycle start)</span><span class="bill-mono">₹154.40</span></div>
+    <div class="bill-row"><span class="label">Govt. taxes (8%)</span><span class="bill-mono">₹109.00</span></div>
+    <div class="bill-row total"><span class="label">Total Amount Due</span><span class="bill-mono" style="color:var(--accent);">₹1,474.00</span></div>
+    <div style="margin-top:14px;background:var(--yellow-dim);border-radius:var(--radius-sm);padding:12px;font-size:12px;color:var(--yellow);">⚠ Due Date: Apr 1, 2025 · Late fee: ₹50 after 7 days</div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('invoiceModal')">Close</button>
+      <button class="btn btn-primary">📤 Send to Customer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showPage(id, navEl) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (navEl) navEl.classList.add('active');
+    const titles = {
+      'dashboard': 'Dashboard', 'customers': 'Customers', 'services': 'Service Details',
+      'requests': 'Service Requests', 'billing': 'Billing & Invoices', 'reports': 'Reports',
+      'start-service': 'Start New Service', 'transfer-service': 'Transfer Service',
+      'data-model': 'Data Model'
+    };
+    document.getElementById('topbar-title').textContent = titles[id] || id;
+    document.querySelector('.content').scrollTop = 0;
+  }
+
+  function setTab(el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id, e) {
+    if (!e || e.target === document.getElementById(id)) {
+      document.getElementById(id).classList.remove('open');
+    }
+  }
+
+  function toggleDrawer() {
+    document.getElementById('notifDrawer').classList.toggle('open');
+  }
+</script>
+</body>
+</html>
